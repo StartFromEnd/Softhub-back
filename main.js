@@ -11,7 +11,7 @@ const cors = require('cors');
 const crypto = require('crypto');
 
 const corsOptions = {
-    origin: ['https://softhub-end.netlify.app', 'https://main--softhub-end.netlify.app', 'https://web.postman.co'],
+    origin: ['https://softhub-end.netlify.app', 'https://softhub-end.netlify.app/signIn', 'https://main--softhub-end.netlify.app', 'https://web.postman.co'],
     credentials: true,
 };
 
