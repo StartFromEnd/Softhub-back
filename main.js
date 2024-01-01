@@ -1,4 +1,5 @@
 require('dotenv').config();
+require('date');
 
 const express = require('express');
 const app = express();
@@ -77,7 +78,6 @@ function checkInfo(isEmailExist, isNicknameExist, req, res, salt, email, passwor
             emailAuthorize(req, res);
         } else if (emailAuth == 'true') {
             var hashedPW = hashing(salt, password);
-            console.log(hashedPW);
             db.query(
                 'INSERT INTO users_table(user_id, user_position, user_pw, user_salt, user_address, created_at, updated_at) VALUES(?, ?, ?, ?, ?, now(), now())',
                 [nickname, 'supporter', hashedPW, salt, email],
@@ -114,6 +114,8 @@ app.post('/signin', (req, res) => {
             }
             else {
                 if (hashing(userInfo[0].user_salt, password) == userInfo[0].user_pw) {
+                    let date = new Date();
+                    console.log('Sign_in / '+userInfo[0].seq+" / "+userInfo[0].user_id+" / "+date);
                     res.json({
                         ok: true,
                         msg: '로그인 성공',
