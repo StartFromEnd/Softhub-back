@@ -103,11 +103,16 @@ app.post('/signin', (req, res) => {
     let password = req.body.signinPassword;
     if (epInjectionCheck(email, password)) {
         db.query('SELECT * FROM users_table WHERE user_address=?', [email], (error, userInfo) => {
-            if (userInfo == undefined) {
+            if (error) {
                 console.log('signin_SELECT_query_Error: ' + error);
+                res.json({ ok: false, msg: '정보 확인중 오류가 발생하였습니다.' });
+                return;
+            } 
+            else if(userInfo.length <= 0){
                 res.json({ ok: false, msg: '해당 이메일로 가입된 계정이 없습니다.' });
                 return;
-            } else {
+            }
+            else {
                 if (hashing(userInfo[0].user_salt, password) == userInfo[0].user_pw) {
                     res.json({
                         ok: true,
