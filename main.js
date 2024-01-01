@@ -9,7 +9,7 @@ const cors = require('cors');
 const crypto = require('crypto');
 
 const corsOptions = {
-    origin: 'https://softhub-end.netlify.app',
+    origin: ['https://softhub-end.netlify.app', 'https://main--softhub-end.netlify.app', 'https://web.postman.co'],
     credentials: true,
 };
 
@@ -23,52 +23,80 @@ app.post('/signup', (req, res) => {
     let nickname = req.body.signupNickname;
     let emailAuth = req.body.signupEmailAuth;
     if (epInjectionCheck(email, password) && nInjectionCheck(nickname)) {
-        let isEmailExist = db.query(
-            `SELECT * FROM users_table WHERE user_address = ${email}`,
+        let isEmailExist;
+        db.query(
+            'SELECT user_address FROM users_table WHERE user_address = ?',
+            [email],
             (error, mail) => {
-                return mail;
+                if (error) {
+                    console.log('signup_SELECT_Error1: '+error);
+                    res.json({ok: false, msg: '정보 확인중 오류가 발생하였습니다.'});
+                    return;
+                }
+                else if(mail.length <= 0){
+                    isEmailExist = false;
+                }
+                else {
+                    isEmailExist = true;
+                }
+                findNickname(isEmailExist, req, res, salt, email, password, nickname, emailAuth);
             }
         );
-        let isNicknameExist = db.query(
-            `SELECT * FROM users_table WHERE user_id = ${nickname}`,
-            (error, id) => {
-                return id;
-            }
-        );
-        if (!isEmailExist == undefined) {
-            res.json({ ok: false, msg: '이미 가입된 이메일입니다.' });
-            return;
-        } else if (!isNicknameExist == undefined) {
-            res.json({ ok: false, msg: '이미 존재하는 닉네임입니다.' });
-            return;
-        } else {
-            if (emailAuth == 'null') {
-                emailAuthorize(req, res);
-            } else if (emailAuth == 'true') {
-                var hashedPW = hashing(salt, password);
-                console.log(hashedPW);
-                db.query(
-                    'INSERT INTO users_table(user_id, user_position, user_pw, user_salt, user_address, created_at, updated_at) VALUES(?, ?, ?, ?, ?, now(), now())',
-                    [nickname, 'supporter' ,hashedPW, salt, email],
-                    (error, result) => {
-                        if (error) {
-                            console.log('signup_INSERT_query_Error: ' + error);
-                            res.json({ ok: false, msg: '정보 저장 중 오류가 발생하였습니다.' });
-                            return;
-                        } else {
-                            res.json({ ok: true, msg: '가입에 성공하였습니다.' });
-                            return;
-                        }
-                    }
-                );
-            } else {
-                res.json({ ok: false, msg: '인증번호가 일치하지 않습니다.' });
-            }
-        }
     } else {
         res.json({ ok: false, msg: '적절하지 않은 문자가 포함되어 있습니다.' });
     }
 });
+
+function findNickname(isEmailExist, req, res, salt, email, password, nickname, emailAuth) {
+    let isNicknameExist;
+    db.query('SELECT user_address FROM users_table WHERE user_id = ?', [nickname], (error, id) => {
+        if (error) {
+            console.log('signup_SELECT_Error2: '+error);
+            res.json({ok: false, msg: '정보 확인중 오류가 발생하였습니다.'});
+            return;
+        } 
+        else if(id.length<=0){
+            isNicknameExist = false;
+        }
+        else {
+            isNicknameExist = true;
+        }
+        checkInfo(isEmailExist, isNicknameExist, req, res, salt, email, password, nickname, emailAuth);
+    });
+}
+
+function checkInfo(isEmailExist, isNicknameExist, req, res, salt, email, password, nickname, emailAuth) {
+    if (isEmailExist) {
+        res.json({ ok: false, msg: '이미 가입된 이메일입니다.' });
+        return;
+    } else if (isNicknameExist) {
+        res.json({ ok: false, msg: '이미 존재하는 닉네임입니다.' });
+        return;
+    } else {
+        if (emailAuth == 'null') {
+            emailAuthorize(req, res);
+        } else if (emailAuth == 'true') {
+            var hashedPW = hashing(salt, password);
+            console.log(hashedPW);
+            db.query(
+                'INSERT INTO users_table(user_id, user_position, user_pw, user_salt, user_address, created_at, updated_at) VALUES(?, ?, ?, ?, ?, now(), now())',
+                [nickname, 'supporter', hashedPW, salt, email],
+                (error, result) => {
+                    if (error) {
+                        console.log('signup_INSERT_query_Error: ' + error);
+                        res.json({ ok: false, msg: '정보 저장 중 오류가 발생하였습니다.' });
+                        return;
+                    } else {
+                        res.json({ ok: true, msg: '가입에 성공하였습니다.' });
+                        return;
+                    }
+                }
+            );
+        } else {
+            res.json({ ok: false, msg: '인증번호가 일치하지 않습니다.' });
+        }
+    }
+}
 
 app.post('/signin', (req, res) => {
     let email = req.body.signinEmail;
