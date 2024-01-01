@@ -26,6 +26,23 @@ jobs:
             options:
               ports: 3000
               start: node main.js
+              env:
+                - name: PORT
+                  secret: port
+                - name: DB_HOST
+                  secret: db_host
+                - name: DB_PORT
+                  secret: db_port
+                - name: DB_USER
+                  secret: db_user
+                - name: DB_PW
+                  secret: db_pw
+                - name: DB_NAME
+                  secret: db_name
+                - name: AUTH_EMAIL_ADDRESS
+                  secret: auth_email_address
+                - name: AUTH_EMAIL_PW
+                  secret: auth_email_pw
             context:
               git:
                 url: git@github.com:${{ github.repository }}.git
