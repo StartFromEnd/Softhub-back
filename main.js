@@ -1,5 +1,6 @@
 require('dotenv').config();
 require('date');
+const requestIp = require('request-ip');
 
 const express = require('express');
 const app = express();
@@ -87,6 +88,9 @@ function checkInfo(isEmailExist, isNicknameExist, req, res, salt, email, passwor
                         res.json({ ok: false, msg: '정보 저장 중 오류가 발생하였습니다.' });
                         return;
                     } else {
+                        let date = new Date();
+                        let ip = requestIp.getClientIp(req);
+                        console.log('SIGN_UP  /  email: '+email+"  /  ip: "+ip+"  /  "+date);
                         res.json({ ok: true, msg: '가입에 성공하였습니다.' });
                         return;
                     }
@@ -115,7 +119,8 @@ app.post('/signin', (req, res) => {
             else {
                 if (hashing(userInfo[0].user_salt, password) == userInfo[0].user_pw) {
                     let date = new Date();
-                    console.log('Sign_in / '+userInfo[0].seq+" / "+userInfo[0].user_id+" / "+date);
+                    let ip = requestIp.getClientIp(req);
+                    console.log('SIGN_IN  /  primary: '+userInfo[0].seq+"  /  id: "+userInfo[0].user_id+"  /  ip: "+ip+"  /  "+date);
                     res.json({
                         ok: true,
                         msg: '로그인 성공',
@@ -135,7 +140,7 @@ app.post('/signin', (req, res) => {
     }
 });
 
-app.listen(process.env.PORT, () => {
+app.listen(process.env.PORT, '0.0.0.0' ,() => {
     console.log(`${process.env.PORT}번 포트에서 대기중`);
 });
 
@@ -222,6 +227,9 @@ var emailAuthorize = (req, res) => {
             smtpTransport.close();
             return;
         } else {
+            let date = new Date();
+            let ip = requestIp.getClientIp(req);
+            console.log('AUTH_EMAIL  /  email: '+mail+"  /  ip: "+ip+"  /  "+date);
             res.json({ ok: true, msg: '메일 전송에 성공하였습니다.', authNum: number });
             smtpTransport.close();
             return;
