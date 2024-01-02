@@ -43,6 +43,8 @@ jobs:
                   secret: auth_email_address
                 - name: AUTH_EMAIL_PW
                   secret: auth_email_pw
+                - name: SESSION_KEY
+                  secret: session_key
             context:
               git:
                 url: git@github.com:${{ github.repository }}.git
