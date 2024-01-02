@@ -43,12 +43,12 @@ app.post('/signup', (req, res) => {
                     isEmailExist = true;
                 }
                 findNickname(isEmailExist, req, res, salt, email, password, nickname, emailAuth);
+                db.end();
             }
         );
     } else {
         res.json({ ok: false, msg: '적절하지 않은 문자가 포함되어 있습니다.' });
     }
-    db.end();
 });
 
 function findNickname(isEmailExist, req, res, salt, email, password, nickname, emailAuth) {
@@ -67,8 +67,8 @@ function findNickname(isEmailExist, req, res, salt, email, password, nickname, e
             isNicknameExist = true;
         }
         checkInfo(isEmailExist, isNicknameExist, req, res, salt, email, password, nickname, emailAuth);
+        db.end();
     });
-    db.end();
 }
 
 function checkInfo(isEmailExist, isNicknameExist, req, res, salt, email, password, nickname, emailAuth) {
@@ -99,13 +99,13 @@ function checkInfo(isEmailExist, isNicknameExist, req, res, salt, email, passwor
                         res.json({ ok: true, msg: '가입에 성공하였습니다.' });
                         return;
                     }
+                    db.end();
                 }
             );
         } else {
             res.json({ ok: false, msg: '인증번호가 일치하지 않습니다.' });
         }
     }
-    db.end();
 }
 
 app.post('/signin', (req, res) => {
@@ -141,11 +141,11 @@ app.post('/signin', (req, res) => {
                     return;
                 }
             }
+            db.end();
         });
     } else {
         res.json({ ok: false, msg: '적절하지 않은 문자가 포함되어 있습니다.' });
     }
-    db.end();
 });
 
 app.listen(process.env.PORT, '0.0.0.0' ,() => {
