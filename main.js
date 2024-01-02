@@ -18,8 +18,21 @@ const corsOptions = {
     credentials: true,
 };
 
+const maxAge = 1000 * 60 * 60 * 1;
+
+const sessionOptions = {
+  secret: process.env.SESSION_KEY,
+  resave: false,
+  saveUninitialized: true,
+  store: new MemoryStore({ checkPeriod: maxAge }),
+  cookie: {
+    maxAge
+  },
+};
+
 app.use(express.urlencoded({ extended: true }));
 app.use(cors(corsOptions));
+app.use(expressSession(sessionOptions));
 
 app.post('/signup', (req, res) => {
     const salt = crypto.randomBytes(128).toString('base64');
@@ -89,6 +102,7 @@ function checkInfo(isEmailExist, isNicknameExist, req, res, salt, email, passwor
                         let date = new Date();
                         let ip = requestIp.getClientIp(req);
                         console.log('SIGN_UP  /  email: '+email+"  /  ip: "+ip+"  /  "+date);
+                        req.session.user = email;
                         res.json({ ok: true, msg: '가입에 성공하였습니다.' });
                     }
                 }
@@ -116,12 +130,10 @@ app.post('/signin', (req, res) => {
                     let date = new Date();
                     let ip = requestIp.getClientIp(req);
                     console.log('SIGN_IN  /  primary: '+userInfo[0].seq+"  /  id: "+userInfo[0].user_id+"  /  ip: "+ip+"  /  "+date);
+                    req.session.user = userInfo[0].user_address;
                     res.json({
                         ok: true,
                         msg: '로그인 성공',
-                        nickname: userInfo[0].user_id,
-                        position: userInfo[0].user_position,
-                        email: userInfo[0].user_address,
                     });
                 } else {
                     res.json({ ok: false, msg: '비밀번호가 일치하지 않습니다.' });
