@@ -19,6 +19,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors(corsOptions));
 
 app.post('/signup', (req, res) => {
+    db.connect();
     const salt = crypto.randomBytes(128).toString('base64');
     let email = req.body.signupEmail;
     let password = req.body.signupPassword;
@@ -47,10 +48,12 @@ app.post('/signup', (req, res) => {
     } else {
         res.json({ ok: false, msg: '적절하지 않은 문자가 포함되어 있습니다.' });
     }
+    db.end();
 });
 
 function findNickname(isEmailExist, req, res, salt, email, password, nickname, emailAuth) {
     let isNicknameExist;
+    db.connect();
     db.query('SELECT user_address FROM users_table WHERE user_id = ?', [nickname], (error, id) => {
         if (error) {
             console.log('signup_SELECT_Error2: '+error);
@@ -65,9 +68,11 @@ function findNickname(isEmailExist, req, res, salt, email, password, nickname, e
         }
         checkInfo(isEmailExist, isNicknameExist, req, res, salt, email, password, nickname, emailAuth);
     });
+    db.end();
 }
 
 function checkInfo(isEmailExist, isNicknameExist, req, res, salt, email, password, nickname, emailAuth) {
+    db.connect();
     if (isEmailExist) {
         res.json({ ok: false, msg: '이미 가입된 이메일입니다.' });
         return;
@@ -100,9 +105,11 @@ function checkInfo(isEmailExist, isNicknameExist, req, res, salt, email, passwor
             res.json({ ok: false, msg: '인증번호가 일치하지 않습니다.' });
         }
     }
+    db.end();
 }
 
 app.post('/signin', (req, res) => {
+    db.connect();
     let email = req.body.signinEmail;
     let password = req.body.signinPassword;
     if (epInjectionCheck(email, password)) {
@@ -138,6 +145,7 @@ app.post('/signin', (req, res) => {
     } else {
         res.json({ ok: false, msg: '적절하지 않은 문자가 포함되어 있습니다.' });
     }
+    db.end();
 });
 
 app.listen(process.env.PORT, '0.0.0.0' ,() => {
