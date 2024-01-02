@@ -3,8 +3,6 @@ require('date');
 const requestIp = require('request-ip');
 
 const express = require('express');
-const session = require('express-session');
-const MemoryStore = require('memorystore')(session);
 
 const app = express();
 
@@ -12,29 +10,18 @@ const http = require('http');
 const cors = require('cors');
 
 const crypto = require('crypto');
+const cookieParser = require('cookie-parser');
 
 const corsOptions = {
     origin: ['https://softhub-end.netlify.app', 'https://softhub-end.netlify.app/signIn', 'https://main--softhub-end.netlify.app', 'https://web.postman.co'],
     credentials: true,
 };
 
-const Age = 1000 * 60 * 60 * 1;
-
-const sessionOptions = {
-  secret: process.env.SESSION_KEY,
-  resave: false,
-  saveUninitialized: true,
-  store: new MemoryStore({ checkPeriod: Age }),
-  cookie: {
-      path: '/',
-      maxAge : Age,
-      secure: true,
-  },
-};
-
 app.use(express.urlencoded({ extended: true }));
 app.use(cors(corsOptions));
-app.use(session(sessionOptions));
+app.use(cookieParser);
+
+var MaxAge = 1000 * 60 * 60 * 1;
 
 app.post('/signup', (req, res) => {
     const salt = crypto.randomBytes(128).toString('base64');
@@ -104,7 +91,7 @@ function checkInfo(isEmailExist, isNicknameExist, req, res, salt, email, passwor
                         let date = new Date();
                         let ip = requestIp.getClientIp(req);
                         console.log('SIGN_UP  /  email: '+email+"  /  ip: "+ip+"  /  "+date);
-                        req.session.user = email;
+                        makeSession(email, res);
                         res.json({ ok: true, msg: '가입에 성공하였습니다.' });
                     }
                 }
@@ -116,7 +103,6 @@ function checkInfo(isEmailExist, isNicknameExist, req, res, salt, email, passwor
 }
 
 app.post('/signin', (req, res) => {
-    console.log(req.sessionID);
     let email = req.body.signinEmail;
     let password = req.body.signinPassword;
     if (epInjectionCheck(email, password)) {
@@ -133,9 +119,7 @@ app.post('/signin', (req, res) => {
                     let date = new Date();
                     let ip = requestIp.getClientIp(req);
                     console.log('SIGN_IN  /  primary: '+userInfo[0].seq+"  /  id: "+userInfo[0].user_id+"  /  ip: "+ip+"  /  "+date);
-                    req.session.user = userInfo[0].user_address;
-                    req.session.save();
-                    console.log(req.session);
+                    makeSession(userInfo[0].user_address, res);
                     res.json({
                         ok: true,
                         msg: '로그인 성공',
@@ -244,3 +228,52 @@ var emailAuthorize = (req, res) => {
         }
     });
 };
+
+function makeSession(address, res){
+    const salt2 = crypto.randomBytes(128).toString('base64');
+    const param = Math.floor(Math.random() * (999999 - 111111 + 1)) + 111111;
+    const session = hashing(salt2, param);
+    db.query('SELECT * FROM sessions_table WHERE user_session=?',
+            [session],
+            (error, result) =>{
+        if(error){
+            console.log('makeSession_SELECT_query_Error: '+error);
+        }
+        else if(result.length>=1){
+            makeSession(address);
+        }
+        else{
+            db.query('SELECT * FROM sessions_table WHERE user_session_address=?',
+                    [address],
+                    (error2, result2) => {
+                if(error2){
+                    console.log('makeSession_SELECT_query2_Error: '+error2);
+                }
+                else if(result2.length >= 1){
+                    db.query('UPDATE sessions_table SET user_session=?, session_created_at=now() WHERE user_session_address=?',
+                            [session, address],
+                            (error3, result3) => {
+                        if(error3){
+                            console.log('makeSession_SELECT_query3_Error: '+error3);
+                        }
+                        else{
+                            res.cookie('sessionID', session, {maxAge: MaxAge});
+                        }
+                    })
+                }
+                else{
+                    db.query('INSERT INTO sessions_table(user_session, user_session_address, session_created_at) VALUES(?, ?, now())',
+                            [session, address],
+                            (error4, result4) => {
+                        if(error4){
+                            console.log('makeSession_SELECT_query4_Error: '+error4);
+                        }
+                        else{
+                            res.cookie('sessionID', session, {maxAge: MaxAge});
+                        }
+                    })
+                }
+            })
+        }
+    })
+}
