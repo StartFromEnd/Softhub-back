@@ -114,7 +114,7 @@ function checkInfo(isEmailExist, isNicknameExist, req, res, salt, email, passwor
 }
 
 app.post('/signin', (req, res) => {
-    console.log(req.session);
+    console.log(req.session.user);
     let email = req.body.signinEmail;
     let password = req.body.signinPassword;
     if (epInjectionCheck(email, password)) {
