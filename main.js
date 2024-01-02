@@ -3,8 +3,8 @@ require('date');
 const requestIp = require('request-ip');
 
 const express = require('express');
-const expressSession = require('express-session');
-const memoryStore = require('memorystore')(session);
+const session = require('express-session');
+const MemoryStore = require('memorystore')(session);
 
 const app = express();
 
@@ -24,7 +24,7 @@ const sessionOptions = {
   secret: process.env.SESSION_KEY,
   resave: false,
   saveUninitialized: true,
-  store: new memoryStore({ checkPeriod: maxAge }),
+  store: new MemoryStore({ checkPeriod: maxAge }),
   cookie: {
     maxAge
   },
@@ -32,7 +32,7 @@ const sessionOptions = {
 
 app.use(express.urlencoded({ extended: true }));
 app.use(cors(corsOptions));
-app.use(expressSession(sessionOptions));
+app.use(session(sessionOptions));
 
 app.post('/signup', (req, res) => {
     const salt = crypto.randomBytes(128).toString('base64');
