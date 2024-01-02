@@ -25,6 +25,7 @@ var MaxAge = 1000 * 60 * 60 * 1;
 
 app.post('/signup', (req, res) => {
     if(req.cookies.sessionID != undefined){res.json({ok: false, msg:'이미 로그인 한 상태입니다.'}); return;};
+    console.log(req.cookies.sessionID);
     const salt = crypto.randomBytes(128).toString('base64');
     let email = req.body.signupEmail;
     let password = req.body.signupPassword;
@@ -104,6 +105,7 @@ function checkInfo(isEmailExist, isNicknameExist, req, res, salt, email, passwor
 
 app.post('/signin', (req, res) => {
     if(req.cookies.sessionID != undefined){res.json({ok: false, msg:'이미 로그인 한 상태입니다.'}); return;}
+    console.log(req.cookies.sessionID);
     let email = req.body.signinEmail;
     let password = req.body.signinPassword;
     if (epInjectionCheck(email, password)) {
