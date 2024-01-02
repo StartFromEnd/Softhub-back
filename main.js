@@ -26,7 +26,9 @@ const sessionOptions = {
   saveUninitialized: true,
   store: new MemoryStore({ checkPeriod: Age }),
   cookie: {
-    maxAge : Age
+      path: '/',
+      maxAge : Age,
+      secure: true,
   },
 };
 
