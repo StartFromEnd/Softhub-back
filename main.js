@@ -19,7 +19,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors(corsOptions));
 
 app.post('/signup', (req, res) => {
-    db.connect();
     const salt = crypto.randomBytes(128).toString('base64');
     let email = req.body.signupEmail;
     let password = req.body.signupPassword;
@@ -42,7 +41,6 @@ app.post('/signup', (req, res) => {
                 else {
                     isEmailExist = true;
                 }
-                db.end();
                 findNickname(isEmailExist, req, res, salt, email, password, nickname, emailAuth);
             }
         );
@@ -53,7 +51,6 @@ app.post('/signup', (req, res) => {
 
 function findNickname(isEmailExist, req, res, salt, email, password, nickname, emailAuth) {
     let isNicknameExist;
-    db.connect();
     db.query('SELECT user_address FROM users_table WHERE user_id = ?', [nickname], (error, id) => {
         if (error) {
             console.log('signup_SELECT_Error2: '+error);
@@ -66,7 +63,6 @@ function findNickname(isEmailExist, req, res, salt, email, password, nickname, e
         else {
             isNicknameExist = true;
         }
-        db.end();
         checkInfo(isEmailExist, isNicknameExist, req, res, salt, email, password, nickname, emailAuth);
     });
 }
@@ -99,7 +95,6 @@ function checkInfo(isEmailExist, isNicknameExist, req, res, salt, email, passwor
                         res.json({ ok: true, msg: '가입에 성공하였습니다.' });
                         return;
                     }
-                    db.end();
                 }
             );
         } else {
@@ -109,7 +104,6 @@ function checkInfo(isEmailExist, isNicknameExist, req, res, salt, email, passwor
 }
 
 app.post('/signin', (req, res) => {
-    db.connect();
     let email = req.body.signinEmail;
     let password = req.body.signinPassword;
     if (epInjectionCheck(email, password)) {
@@ -141,7 +135,6 @@ app.post('/signin', (req, res) => {
                     return;
                 }
             }
-            db.end();
         });
     } else {
         res.json({ ok: false, msg: '적절하지 않은 문자가 포함되어 있습니다.' });
