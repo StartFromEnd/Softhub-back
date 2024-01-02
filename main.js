@@ -42,8 +42,8 @@ app.post('/signup', (req, res) => {
                 else {
                     isEmailExist = true;
                 }
-                findNickname(isEmailExist, req, res, salt, email, password, nickname, emailAuth);
                 db.end();
+                findNickname(isEmailExist, req, res, salt, email, password, nickname, emailAuth);
             }
         );
     } else {
@@ -66,8 +66,8 @@ function findNickname(isEmailExist, req, res, salt, email, password, nickname, e
         else {
             isNicknameExist = true;
         }
-        checkInfo(isEmailExist, isNicknameExist, req, res, salt, email, password, nickname, emailAuth);
         db.end();
+        checkInfo(isEmailExist, isNicknameExist, req, res, salt, email, password, nickname, emailAuth);
     });
 }
 
