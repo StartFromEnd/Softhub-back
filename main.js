@@ -10,6 +10,7 @@ const http = require('http');
 const cors = require('cors');
 
 const crypto = require('crypto');
+const cookie =  require('cookie');
 const cookieParser = require('cookie-parser');
 
 const corsOptions = {
@@ -24,8 +25,9 @@ app.use(cookieParser());
 var MaxAge = 1000 * 60 * 60 * 1;
 
 app.post('/signup', (req, res) => {
-    if(req.cookies.sessionID != undefined){res.json({ok: false, msg:'이미 로그인 한 상태입니다.'}); return;};
-    console.log(req.cookies.sessionID);
+    if(req.headers.cookie.sessionID != undefined){res.json({ok: false, msg:'이미 로그인 한 상태입니다.'}); return;};
+    console.log(req.headers.cookie);
+    console.log(req.headers.cookies);
     const salt = crypto.randomBytes(128).toString('base64');
     let email = req.body.signupEmail;
     let password = req.body.signupPassword;
@@ -104,8 +106,7 @@ function checkInfo(isEmailExist, isNicknameExist, req, res, salt, email, passwor
 }
 
 app.post('/signin', (req, res) => {
-    if(req.cookies.sessionID != undefined){res.json({ok: false, msg:'이미 로그인 한 상태입니다.'}); return;}
-    console.log(req.cookies.sessionID);
+    if(req.headers.cookie.sessionID != undefined){res.json({ok: false, msg:'이미 로그인 한 상태입니다.'}); return;}
     let email = req.body.signinEmail;
     let password = req.body.signinPassword;
     if (epInjectionCheck(email, password)) {
@@ -259,7 +260,7 @@ function makeSession(address, res, msg){
                             res.json({ok: false, msg:'정보 저장중 오류가 발생하였습니다.'});
                         }
                         else{
-                            res.cookie('sessionID', session, {maxAge: MaxAge});
+                            res.setHeader('Set-Cookie', cookie.serialize('sessionID', session, {httpOnly: true, maxAge: MaxAge}));
                             res.json({ok: true, msg: msg});
                         }
                     })
@@ -273,7 +274,7 @@ function makeSession(address, res, msg){
                             res.json({ok: false, msg:'정보 저장중 오류가 발생하였습니다.'});
                         }
                         else{
-                            res.cookie('sessionID', session, {maxAge: MaxAge});
+                            res.setHeader('Set-Cookie', cookie.serialize('sessionID', session, {httpOnly: true, maxAge: MaxAge}));
                             res.json({ok: true, msg: msg});
                         }
                     })
