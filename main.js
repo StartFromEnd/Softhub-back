@@ -24,7 +24,7 @@ const sessionOptions = {
   secret: process.env.SESSION_KEY,
   resave: false,
   saveUninitialized: true,
-  store: new MemoryStore({ checkPeriod: maxAge }),
+  store: new memoryStore({ checkPeriod: maxAge }),
   cookie: {
     maxAge
   },
