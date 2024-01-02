@@ -4,7 +4,9 @@
     "date": "^2.0.3",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "express-session": "^1.17.3",
     "http": "^0.0.1-security",
+    "memorystore": "^1.6.7",
     "mysql": "^2.18.1",
     "nodemailer": "^6.9.8",
     "request-ip": "^3.3.0"

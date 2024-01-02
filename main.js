@@ -3,6 +3,9 @@ require('date');
 const requestIp = require('request-ip');
 
 const express = require('express');
+const expressSession = require('express-session');
+const memoryStore = require('memorystore')(expressSession);
+
 const app = express();
 
 const http = require('http');
