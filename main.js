@@ -82,6 +82,7 @@ function findNickname(isEmailExist, req, res, salt, email, password, nickname, e
 }
 
 function checkInfo(isEmailExist, isNicknameExist, req, res, salt, email, password, nickname, emailAuth) {
+    console.log(req.session);
     if (isEmailExist) {
         res.json({ ok: false, msg: '이미 가입된 이메일입니다.' });
     } else if (isNicknameExist) {
