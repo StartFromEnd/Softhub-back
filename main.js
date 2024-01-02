@@ -132,6 +132,7 @@ app.post('/signin', (req, res) => {
                     let ip = requestIp.getClientIp(req);
                     console.log('SIGN_IN  /  primary: '+userInfo[0].seq+"  /  id: "+userInfo[0].user_id+"  /  ip: "+ip+"  /  "+date);
                     req.session.user = userInfo[0].user_address;
+                    req.session.save();
                     console.log(req.session);
                     res.json({
                         ok: true,
