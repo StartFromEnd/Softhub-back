@@ -18,15 +18,15 @@ const corsOptions = {
     credentials: true,
 };
 
-const maxAge = 1000 * 60 * 60 * 1;
+const Age = 1000 * 60 * 60 * 1;
 
 const sessionOptions = {
   secret: process.env.SESSION_KEY,
   resave: false,
   saveUninitialized: true,
-  store: new MemoryStore({ checkPeriod: maxAge }),
+  store: new MemoryStore({ checkPeriod: Age }),
   cookie: {
-    maxAge
+    maxAge : Age
   },
 };
 
