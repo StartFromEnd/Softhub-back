@@ -36,7 +36,6 @@ app.post('/signup', (req, res) => {
                 if (error) {
                     console.log('signup_SELECT_Error1: '+error);
                     res.json({ok: false, msg: '정보 확인중 오류가 발생하였습니다.'});
-                    return;
                 }
                 else if(mail.length <= 0){
                     isEmailExist = false;
@@ -58,7 +57,6 @@ function findNickname(isEmailExist, req, res, salt, email, password, nickname, e
         if (error) {
             console.log('signup_SELECT_Error2: '+error);
             res.json({ok: false, msg: '정보 확인중 오류가 발생하였습니다.'});
-            return;
         } 
         else if(id.length<=0){
             isNicknameExist = false;
@@ -73,10 +71,8 @@ function findNickname(isEmailExist, req, res, salt, email, password, nickname, e
 function checkInfo(isEmailExist, isNicknameExist, req, res, salt, email, password, nickname, emailAuth) {
     if (isEmailExist) {
         res.json({ ok: false, msg: '이미 가입된 이메일입니다.' });
-        return;
     } else if (isNicknameExist) {
         res.json({ ok: false, msg: '이미 존재하는 닉네임입니다.' });
-        return;
     } else {
         if (emailAuth == 'null') {
             emailAuthorize(req, res);
@@ -89,13 +85,11 @@ function checkInfo(isEmailExist, isNicknameExist, req, res, salt, email, passwor
                     if (error) {
                         console.log('signup_INSERT_query_Error: ' + error);
                         res.json({ ok: false, msg: '정보 저장 중 오류가 발생하였습니다.' });
-                        return;
                     } else {
                         let date = new Date();
                         let ip = requestIp.getClientIp(req);
                         console.log('SIGN_UP  /  email: '+email+"  /  ip: "+ip+"  /  "+date);
                         res.json({ ok: true, msg: '가입에 성공하였습니다.' });
-                        return;
                     }
                 }
             );
@@ -113,11 +107,9 @@ app.post('/signin', (req, res) => {
             if (error) {
                 console.log('signin_SELECT_query_Error: ' + error);
                 res.json({ ok: false, msg: '정보 확인중 오류가 발생하였습니다.' });
-                return;
             } 
             else if(userInfo.length <= 0){
                 res.json({ ok: false, msg: '해당 이메일로 가입된 계정이 없습니다.' });
-                return;
             }
             else {
                 if (hashing(userInfo[0].user_salt, password) == userInfo[0].user_pw) {
@@ -131,10 +123,8 @@ app.post('/signin', (req, res) => {
                         position: userInfo[0].user_position,
                         email: userInfo[0].user_address,
                     });
-                    return;
                 } else {
                     res.json({ ok: false, msg: '비밀번호가 일치하지 않습니다.' });
-                    return;
                 }
             }
         });
@@ -228,14 +218,12 @@ var emailAuthorize = (req, res) => {
             console.log('sendMail_Error: ' + error);
             res.json({ ok: false, msg: '메일 전송에 실패하였습니다.' });
             smtpTransport.close();
-            return;
         } else {
             let date = new Date();
             let ip = requestIp.getClientIp(req);
             console.log('AUTH_EMAIL  /  email: '+mail+"  /  ip: "+ip+"  /  "+date);
             res.json({ ok: true, msg: '메일 전송에 성공하였습니다.', authNum: number });
             smtpTransport.close();
-            return;
         }
     });
 };
