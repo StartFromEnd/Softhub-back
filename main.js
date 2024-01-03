@@ -237,7 +237,7 @@ app.post('/session', (req, res) => {
 
 app.post('/signout', (req, res) => {
     let session = req.body.sessionID;
-    if(nInjectionCheck(req)){
+    if(nInjectionCheck(session)){
         db.query('DELETE FROM sessions_table WHERE user_session=?',
                 [session],
                 (error, result) => {
