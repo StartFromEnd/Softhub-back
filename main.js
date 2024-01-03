@@ -27,7 +27,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors(corsOptions));
 app.use(cookieParser());
 
-var MaxAge = 1; //hours
+var MaxAge = 72; //hours
 
 app.post('/signup', (req, res) => {
     console.log(req.headers.cookie);
