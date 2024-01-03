@@ -228,7 +228,7 @@ var emailAuthorize = (req, res) => {
 };
 
 function makeSession(address, res, msg){
-    db.query('select * from sessions_table where date_format(DATE_SUB(session_created_at, INTERVAL ? hour), "%Y%m%d%H") <= date_format(now(), "%Y%m%d%H")',
+    db.query('select seq from sessions_table where date_format(DATE_SUB(session_created_at, INTERVAL ? hour), "%Y%m%d%H") <= date_format(now(), "%Y%m%d%H")',
             [1],
             (error, result) => {
                 if(error){
