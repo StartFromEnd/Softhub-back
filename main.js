@@ -236,8 +236,8 @@ function makeSession(address, res, msg){
                     res.json({ok: false, msg:'정보 저장중 오류가 발생하였습니다.'});
                 }
                 else if(result.length >= 1){
-                    let target;
-                    for(int i=0; i<result.length; i++){
+                    let target = '';
+                    for(var i=0; i<result.length; i++){
                         target += `${result[i].seq}`;
                         if(!i>=(result.length-1)){
                             target += ',';
