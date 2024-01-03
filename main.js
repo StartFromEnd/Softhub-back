@@ -246,7 +246,7 @@ function makeSession(address, res, msg){
                         }
                     }
                     db.query('delete from sessions_table where seq in('+target,
-                            array,
+                            ['1', '2'],
                             (error2, result2) => {
                         if(error2){
                             console.log('makeSession_SELECT_expired_query2_Error: '+error2)
