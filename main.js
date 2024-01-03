@@ -205,6 +205,16 @@ app.post('/session', (req, res) => {
                                     position: result2[0].user_position,
                                     address: result2[0].user_address,
                                 });
+                                db.query('UPDATE sessions_table SET session_created_at=DATE_ADD(now(), INTERVAL ? HOUR) WHERE user_session=?',
+                                        [MaxAge, sessionID],
+                                        (error3, result3) => {
+                                    if(error3){
+                                        console.log('session_UPDATE_query3_Error: '+error3);
+                                    }
+                                    else{
+                                        console.log('UPDATE_SESSION  /  email: ' + result2[0] + '  /  ip: '+ip + '  /  'date);
+                                    }
+                                })
                             }
                         }
                     );
@@ -224,6 +234,35 @@ app.post('/session', (req, res) => {
         res.json({ ok: false, msg: '유효하지 않은 세션 값 입니다.' });
     }
 });
+
+app.post('/signout', (req, res) => {
+    let session = req.body.sessionID;
+    if(nInjectionCheck(req)){
+        db.query('DELETE FROM sessions_table WHERE user_session=?',
+                [session],
+                (error, result) => {
+            if(error){
+                console.log('signout_DELETE_query_Error: '+error);
+                res.json({ok: false, msg:'로그아웃중 오류가 발생하였습니다.'});
+            }
+            else{
+                res.json({ok: true, msg:'로그아웃 성공'});
+            }
+        })
+    }
+    else{
+        let date = new Date();
+        let ip = requestIp.getClientIp(req);
+        console.log(
+            'SESSION_INJECTION  /  email: ' +
+                '  /  ip: ' +
+                ip +
+                '  /  ' +
+                date
+        );
+        res.json({ ok: false, msg: '유효하지 않은 세션 값 입니다.' });
+    }
+})
 
 app.listen(process.env.PORT, '0.0.0.0', () => {
     console.log(`${process.env.PORT}번 포트에서 대기중`);
