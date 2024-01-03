@@ -236,6 +236,7 @@ function makeSession(address, res, msg){
                     res.json({ok: false, msg:'정보 저장중 오류가 발생하였습니다.'});
                 }
                 else if(result.length >= 1){
+                    console.log(result.join());
                     db.query('delete from sessions_table where seq in(?)',
                             [result.join()],
                             (error2, result2) => {
