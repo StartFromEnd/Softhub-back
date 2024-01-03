@@ -240,7 +240,7 @@ function makeSession(address, res, msg){
                     let array = [];
                     for (var i = 0; i < result.length; i++) {
                         target += '?';
-                        array.push(`${result[i].seq}`);
+                        array.push(result[i].seq);
                         if(!(i >= result.length-1)){
                             target += ',';
                         }
