@@ -232,17 +232,17 @@ function makeSession(address, res, msg){
             [1],
             (error, result) => {
                 if(error){
-                    console.log('makeSession_SELECT_expired_query_Error: '+error)
+                    console.log('makeSession_SELECT_expired_query_Error: '+error);
                     res.json({ok: false, msg:'정보 저장중 오류가 발생하였습니다.'});
                 }
                 else if(result.length >= 1){
                     let target = '';
-                    for(var i=0; i<result.length; i++){
-                        target += `${result[i].seq}`;
-                        if(!i>=(result.length-1)){
+                    result.foreach((value, index, array) => {
+                        target += `${value.seq}`;
+                        if(!(index>=(result.length-1))){
                             target += ',';
                         }
-                    }
+                    })
                     db.query('delete from sessions_table where seq in(?)',
                             [target],
                             (error2, result2) => {
@@ -253,7 +253,7 @@ function makeSession(address, res, msg){
                         else{
                             
                         }
-                    })
+                    });
                 }
                 else{
                     
