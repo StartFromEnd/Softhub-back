@@ -237,12 +237,12 @@ function makeSession(address, res, msg){
                 }
                 else if(result.length >= 1){
                     let target = '';
-                    result.foreach((value, index, array) => {
-                        target += `${value.seq}`;
-                        if(!(index>=(result.length-1))){
+                    for (var i = 0; i < result.length; i++) {
+                        target += `${result[i].seq}`;
+                        if(!(i >= result.length-1)){
                             target += ',';
                         }
-                    })
+                    }
                     db.query('delete from sessions_table where seq in(?)',
                             [target],
                             (error2, result2) => {
