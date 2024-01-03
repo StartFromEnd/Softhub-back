@@ -30,8 +30,6 @@ app.use(cookieParser());
 var MaxAge = 72; //hours
 
 app.post('/signup', (req, res) => {
-    console.log(req.headers.cookie);
-    console.log(req.cookies);
     const salt = crypto.randomBytes(128).toString('base64');
     let email = req.body.signupEmail;
     let password = req.body.signupPassword;
@@ -353,7 +351,7 @@ var emailAuthorize = (req, res) => {
             let date = new Date();
             let ip = requestIp.getClientIp(req);
             console.log('AUTH_EMAIL  /  email: ' + mail + '  /  ip: ' + ip + '  /  ' + date);
-            res.json({ ok: true, msg: '메일 전송에 성공하였습니다.', authNum: number });
+            res.json({ ok: true, msg: mail+'계정으로 인증번호 전송에 성공하였습니다.', authNum: number });
             smtpTransport.close();
         }
     });
