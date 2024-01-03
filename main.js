@@ -238,7 +238,7 @@ function makeSession(address, res, msg){
                 else if(result.length >= 1){
                     console.log(result);
                     console.log(result.join());
-                    console.log(result[0]);
+                    console.log(result[0].seq);
                     console.log(result[0].join);
                     db.query('delete from sessions_table where seq in(?)',
                             [result.join()],
