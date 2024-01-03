@@ -229,14 +229,27 @@ var emailAuthorize = (req, res) => {
 
 function makeSession(address, res, msg){
     db.query('select * from sessions_table where date_format(DATE_ADD(session_created_at, INTERVAL ? hour), "%Y%m%d%H") <= date_format(now(), "%Y%m%d%H")',
-            [1],
+            [0],
             (error, result) => {
                 if(error){
                     console.log('makeSession_SELECT_expired_query_Error: '+error)
                     res.json({ok: false, msg:'정보 저장중 오류가 발생하였습니다.'});
                 }
+                else if(result.length >= 1){
+                    db.query('delete from sessions_table where seq in(?)',
+                            [result.join()],
+                            (error2, result2) => {
+                        if(error2){
+                            console.log('makeSession_SELECT_expired_query2_Error: '+error2)
+                            res.json({ok: false, msg:'정보 저장중 오류가 발생하였습니다.'});
+                        }
+                        else{
+                            
+                        }
+                    })
+                }
                 else{
-                    console.log(result)
+                    
                 }
             });
     const salt2 = crypto.randomBytes(128).toString('base64');
