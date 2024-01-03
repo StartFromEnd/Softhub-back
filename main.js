@@ -25,10 +25,6 @@ app.use(cookieParser());
 var MaxAge = 1000 * 60 * 60 * 1;
 
 app.post('/signup', (req, res) => {
-    if(req.headers.cookie){
-        res.json({ok: false, msg:'이미 로그인 한 상태입니다.'});
-        return;
-    };
     console.log(req.headers.cookie);
     console.log(req.cookies);
     const salt = crypto.randomBytes(128).toString('base64');
@@ -109,10 +105,6 @@ function checkInfo(isEmailExist, isNicknameExist, req, res, salt, email, passwor
 }
 
 app.post('/signin', (req, res) => {
-    if(req.headers.cookie){
-        res.json({ok: false, msg:'이미 로그인 한 상태입니다.'});
-        return;
-    };
     let email = req.body.signinEmail;
     let password = req.body.signinPassword;
     if (epInjectionCheck(email, password)) {
@@ -236,6 +228,17 @@ var emailAuthorize = (req, res) => {
 };
 
 function makeSession(address, res, msg){
+    db.query('select * from sessions_table where date_format(DATE_ADD(session_created_at, INTERVAL ? hour), "%Y%m%d%H") <= date_format(now(), "%Y%m%d%H")',
+            [1],
+            (error, result) => {
+                if(error){
+                    console.log('makeSession_SELECT_expired_query_Error: '+error)
+                    res.json({ok: false, msg:'정보 저장중 오류가 발생하였습니다.'});
+                }
+                else{
+                    console.log(result)
+                }
+            });
     const salt2 = crypto.randomBytes(128).toString('base64');
     const param = Math.floor(Math.random() * (999999 - 111111 + 1)) + 111111;
     const session = hashing(salt2, param);
@@ -266,8 +269,7 @@ function makeSession(address, res, msg){
                             res.json({ok: false, msg:'정보 저장중 오류가 발생하였습니다.'});
                         }
                         else{
-                            res.setHeader('Set-Cookie', cookie.serialize('sessionID', session, {httpOnly: true, maxAge: MaxAge}));
-                            res.json({ok: true, msg: msg});
+                            res.json({ok: true, msg: msg, cookie: [session, MaxAge]});
                         }
                     })
                 }
@@ -280,8 +282,7 @@ function makeSession(address, res, msg){
                             res.json({ok: false, msg:'정보 저장중 오류가 발생하였습니다.'});
                         }
                         else{
-                            res.setHeader('Set-Cookie', cookie.serialize('sessionID', session, {httpOnly: true, maxAge: MaxAge}));
-                            res.json({ok: true, msg: msg});
+                            res.json({ok: true, msg: msg, cookie: [session, MaxAge]});
                         }
                     })
                 }
