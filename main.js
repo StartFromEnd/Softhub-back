@@ -238,7 +238,7 @@ function makeSession(address, res, msg){
                 else if(result.length >= 1){
                     let target = '';
                     for (var i = 0; i < result.length; i++) {
-                        target += `${result[i].seq}`;
+                        target += `'${result[i].seq}'`;
                         if(!(i >= result.length-1)){
                             target += ',';
                         }
