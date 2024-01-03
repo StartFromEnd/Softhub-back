@@ -236,12 +236,15 @@ function makeSession(address, res, msg){
                     res.json({ok: false, msg:'정보 저장중 오류가 발생하였습니다.'});
                 }
                 else if(result.length >= 1){
-                    console.log(result);
-                    console.log(result.join());
-                    console.log(result[0].seq);
-                    console.log(result[0].join);
+                    let target;
+                    for(int i=0; i<result.length; i++){
+                        target += `${result[i].seq}`;
+                        if(!i>=(result.length-1)){
+                            target += ',';
+                        }
+                    }
                     db.query('delete from sessions_table where seq in(?)',
-                            [result.join()],
+                            [target],
                             (error2, result2) => {
                         if(error2){
                             console.log('makeSession_SELECT_expired_query2_Error: '+error2)
