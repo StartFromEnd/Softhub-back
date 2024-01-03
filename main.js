@@ -22,7 +22,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors(corsOptions));
 app.use(cookieParser());
 
-var MaxAge = 1000 * 60 * 60 * 1;
+var MaxAge = 1; //hours
 
 app.post('/signup', (req, res) => {
     console.log(req.headers.cookie);
@@ -131,6 +131,10 @@ app.post('/signin', (req, res) => {
         res.json({ ok: false, msg: '적절하지 않은 문자가 포함되어 있습니다.' });
     }
 });
+
+app.post('/session', (req, res) => {
+    
+})
 
 app.listen(process.env.PORT, '0.0.0.0' ,() => {
     console.log(`${process.env.PORT}번 포트에서 대기중`);
