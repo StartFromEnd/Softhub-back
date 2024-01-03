@@ -228,8 +228,8 @@ var emailAuthorize = (req, res) => {
 };
 
 function makeSession(address, res, msg){
-    db.query('select * from sessions_table where date_format(DATE_ADD(session_created_at, INTERVAL ? hour), "%Y%m%d%H") <= date_format(now(), "%Y%m%d%H")',
-            [0],
+    db.query('select * from sessions_table where date_format(DATE_SUB(session_created_at, INTERVAL ? hour), "%Y%m%d%H") <= date_format(now(), "%Y%m%d%H")',
+            [1],
             (error, result) => {
                 if(error){
                     console.log('makeSession_SELECT_expired_query_Error: '+error)
