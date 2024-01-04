@@ -210,7 +210,7 @@ app.post('/session', (req, res) => {
                                         console.log('session_UPDATE_query3_Error: '+error3);
                                     }
                                     else{
-                                        console.log('UPDATE_SESSION  /  email: ' + result2[0].user_address + '  /  ip: '+ip + '  /  '+date);
+                                        return;
                                     }
                                 })
                             }
