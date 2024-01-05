@@ -186,16 +186,6 @@ app.post('/session', (req, res) => {
                                     msg: '존재하지 않는 계정에 대한 세션입니다.',
                                 });
                             } else {
-                                let date = new Date();
-                                let ip = requestIp.getClientIp(req);
-                                console.log(
-                                    'CHECK_SESSION  /  email: ' +
-                                        result2[0].user_address +
-                                        '  /  ip: ' +
-                                        ip +
-                                        '  /  ' +
-                                        date
-                                );
                                 res.json({
                                     ok: true,
                                     msg: '세션인증 완료',
