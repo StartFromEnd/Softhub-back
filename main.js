@@ -61,7 +61,8 @@ function findNickname(isEmailExist, req, res, salt, email, password, nickname, e
     let isNicknameExist;
     db.query('SELECT user_address FROM users_table WHERE user_id = ?', [nickname], (error, id) => {
         if (error) {
-            console.log('signup_SELECT_Error2: ' + error);
+            let date = new Date();
+            console.log('signup_SELECT_Error2: ' + error + '  /  email: '+email + '  /  '+date);
             res.json({ ok: false, msg: '정보 확인중 오류가 발생하였습니다.' });
         } else if (id.length <= 0) {
             isNicknameExist = false;
@@ -106,11 +107,11 @@ function checkInfo(
                 'INSERT INTO users_table(user_id, user_position, user_pw, user_salt, user_address, created_at, updated_at) VALUES(?, ?, ?, ?, ?, now(), now())',
                 [nickname, 'supporter', hashedPW, salt, email],
                 (error, result) => {
+                    let date = new Date();
                     if (error) {
-                        console.log('signup_INSERT_query_Error: ' + error);
+                        console.log('signup_INSERT_query_Error: ' + error + '  /  email: '+email + '  /  '+date);
                         res.json({ ok: false, msg: '정보 저장 중 오류가 발생하였습니다.' });
                     } else {
-                        let date = new Date();
                         let ip = requestIp.getClientIp(req);
                         console.log(
                             'SIGN_UP  /  email: ' + email + '  /  ip: ' + ip + '  /  ' + date
@@ -130,14 +131,14 @@ app.post('/signin', (req, res) => {
     let password = req.body.signinPassword;
     if (epInjectionCheck(email, password)) {
         db.query('SELECT * FROM users_table WHERE user_address=?', [email], (error, userInfo) => {
+            let date = new Date();
             if (error) {
-                console.log('signin_SELECT_query_Error: ' + error);
+                console.log('signin_SELECT_query_Error: ' + error + '  /  email: '+email + '  /  '+date);
                 res.json({ ok: false, msg: '정보 확인중 오류가 발생하였습니다.' });
             } else if (userInfo.length <= 0) {
                 res.json({ ok: false, msg: '해당 이메일로 가입된 계정이 없습니다.' });
             } else {
                 if (hashing(userInfo[0].user_salt, password) == userInfo[0].user_pw) {
-                    let date = new Date();
                     let ip = requestIp.getClientIp(req);
                     console.log(
                         'SIGN_IN  /  primary: ' +
@@ -167,8 +168,9 @@ app.post('/session', (req, res) => {
             'SELECT * FROM sessions_table WHERE user_session=?',
             [sessionID],
             (error, result) => {
+                let date = new Date();
                 if (error) {
-                    console.log('session_SELECT_query_Error: ' + error);
+                    console.log('session_SELECT_query_Error: ' + error + '  /  session: '+sessionID+'  /  '+date);
                     res.json({ ok: false, msg: '세션 확인중 오류가 발생하였습니다.' });
                 } else if (result.length <= 0) {
                     res.json({ ok: false, msg: '만료된 세션입니다. 다시 로그인 해 주십시오.' });
@@ -178,7 +180,7 @@ app.post('/session', (req, res) => {
                         [result[0].user_session_address],
                         (error2, result2) => {
                             if (error2) {
-                                console.log('session_SELECT_query2_Error: ' + error2);
+                                console.log('session_SELECT_query2_Error: ' + error2 + '  /  session: '+sessionID+'  /  '+date);
                                 res.json({ ok: false, msg: '정보 확인중 오류가 발생하였습니다.' });
                             } else if (result2.length <= 0) {
                                 res.json({
@@ -193,16 +195,17 @@ app.post('/session', (req, res) => {
                                     position: result2[0].user_position,
                                     address: result2[0].user_address,
                                 });
-                                db.query('UPDATE sessions_table SET session_created_at=DATE_ADD(now(), INTERVAL ? HOUR) WHERE user_session=?',
-                                        [MaxAge, sessionID],
-                                        (error3, result3) => {
-                                    if(error3){
-                                        console.log('session_UPDATE_query3_Error: '+error3);
+                                db.query(
+                                    'UPDATE sessions_table SET session_created_at=DATE_ADD(now(), INTERVAL ? HOUR) WHERE user_session=?',
+                                    [MaxAge, sessionID],
+                                    (error3, result3) => {
+                                        if (error3) {
+                                            console.log('session_UPDATE_query3_Error: ' + error3 + '  /  session: '+sessionID+'  /  '+date);
+                                        } else {
+                                            return;
+                                        }
                                     }
-                                    else{
-                                        return;
-                                    }
-                                })
+                                );
                             }
                         }
                     );
@@ -212,45 +215,80 @@ app.post('/session', (req, res) => {
     } else {
         let date = new Date();
         let ip = requestIp.getClientIp(req);
-        console.log(
-            'SESSION_INJECTION  /  email: ' +
-                '  /  ip: ' +
-                ip +
-                '  /  ' +
-                date
-        );
+        console.log('SESSION_INJECTION  /  ip: ' + ip + '  /  ' + date);
         res.json({ ok: false, msg: '유효하지 않은 세션 값 입니다.' });
     }
 });
 
 app.post('/signout', (req, res) => {
     let session = req.body.sessionID;
-    if(nInjectionCheck(session)){
-        db.query('DELETE FROM sessions_table WHERE user_session=?',
-                [session],
-                (error, result) => {
-            if(error){
-                console.log('signout_DELETE_query_Error: '+error);
-                res.json({ok: false, msg:'로그아웃중 오류가 발생하였습니다.'});
+    let date = new Date();
+    if (nInjectionCheck(session)) {
+        db.query('DELETE FROM sessions_table WHERE user_session=?', [session], (error, result) => {
+            if (error) {
+                console.log('signout_DELETE_query_Error: ' + error + '  /  session: '+session+'  /  '+date);
+                res.json({ ok: false, msg: '로그아웃중 오류가 발생하였습니다.' });
+            } else {
+                res.json({ ok: true, msg: '로그아웃 성공' });
             }
-            else{
-                res.json({ok: true, msg:'로그아웃 성공'});
-            }
-        })
-    }
-    else{
-        let date = new Date();
+        });
+    } else 
         let ip = requestIp.getClientIp(req);
-        console.log(
-            'SESSION_INJECTION  /  email: ' +
-                '  /  ip: ' +
-                ip +
-                '  /  ' +
-                date
-        );
+        console.log('SESSION_INJECTION  /  email: ' + '  /  ip: ' + ip + '  /  ' + date);
         res.json({ ok: false, msg: '유효하지 않은 세션 값 입니다.' });
     }
-})
+});
+
+app.post('/faq', (req, res) => {
+    let session = req.body.sessionID;
+    let page = req.body.pageNum;
+    let date = new Date();
+    if (session !== undefined) {
+        if (nInjectionCheck(session)) {
+            db.query('SELECT user_session_address FROM sessions_table WHERE user_session=?',
+                    [session],
+                    (error, result) => {
+                if(error){
+                    console.log('faq_SELECT_query_Error: '+error + '  /  session: '+session+'  /  '+date);
+                    req.json({ok: false, msg:'세션을 인증하던중 오류가 발생하였습니다.'});
+                }
+                else if(result.length <= 0){
+                    req.json({ok: false, msg:'만료된 세션 입니다.'});
+                }
+                else{
+                    db.query('SELECT COUNT(seq) FROM faqs_table WHERE faq_from_whom=? AND faq_option=private',
+                            [result[0]],
+                            (error2, result2) => {
+                        if(error2){
+                            console.log('faq_SELECT_query2_Error: '+error2 + '  /  session: '+session+'  /  '+date);
+                            req.json({ok: false, msg:'문의정보 확인중 오류가 발생하였습니다.'});
+                        }
+                        else{
+                            let faqNum = result2;
+                            db.query('SELECT * FROM faqs_table WHERE faq_from_whom=? AND faq_options=private ORDER BY seq DESC Limit ?, ?',
+                                    [result[0], 10*(page-1), (faqNum>=10*(page-1)+10 ? 10 : faqNum-(10*(page-1)))]),
+                                (error3, result3) => {
+                                if(error3){
+                                    console.log('faq_SELECT_query3_Error: '+error3 + '  /  session: '+session+'  /  '+date);
+                                    req.json({ok: false, msg:'문의정보 확인중 오류가 발생하였습니다.'});
+                                }
+                                else{
+                                    req.json({ok: true, msg:'문의정보 확인 성공', faqNum: faqNum, faqList: result3});
+                                }
+                            }
+                        }
+                    })
+                }
+            })
+        } else {
+            let ip = requestIp.getClientIp(req);
+            console.log('SESSION_INJECTION  /  email: ' + '  /  ip: ' + ip + '  /  ' + date);
+            res.json({ ok: false, msg: '유효하지 않은 세션 값 입니다.' });
+        }
+    } else {
+        
+    }
+});
 
 app.listen(process.env.PORT, '0.0.0.0', () => {
     console.log(`${process.env.PORT}번 포트에서 대기중`);
@@ -333,27 +371,32 @@ var emailAuthorize = (req, res) => {
 
     smtpTransport.sendMail(mailOptions, (error, response) => {
         console.log('response: ' + response);
+        let date = new Date();
         if (error) {
-            console.log('sendMail_Error: ' + error);
+            console.log('sendMail_Error: ' + error + '  /  email: '+mail+'  /  '+date);
             res.json({ ok: false, msg: '메일 전송에 실패하였습니다.' });
             smtpTransport.close();
         } else {
-            let date = new Date();
             let ip = requestIp.getClientIp(req);
             console.log('AUTH_EMAIL  /  email: ' + mail + '  /  ip: ' + ip + '  /  ' + date);
-            res.json({ ok: true, msg: mail+'계정으로 인증번호 전송에 성공하였습니다.', authNum: number });
+            res.json({
+                ok: true,
+                msg: mail + '계정으로 인증번호 전송에 성공하였습니다.',
+                authNum: number,
+            });
             smtpTransport.close();
         }
     });
 };
 
 function makeSession(address, res, msg) {
+    let date = new Date();
     db.query(
         'select seq from sessions_table where date_format(DATE_ADD(session_created_at, INTERVAL ? hour), "%Y%m%d%H") <= date_format(now(), "%Y%m%d%H")',
         [MaxAge],
         (error, result) => {
             if (error) {
-                console.log('makeSession_SELECT_expired_query_Error: ' + error);
+                console.log('makeSession_SELECT_expired_query_Error: ' + error + '  /  email: '+address+ '  /  '+date);
                 res.json({ ok: false, msg: '정보 저장중 오류가 발생하였습니다.' });
             } else if (result.length >= 1) {
                 let target = '';
@@ -370,7 +413,7 @@ function makeSession(address, res, msg) {
                     array,
                     (error2, result2) => {
                         if (error2) {
-                            console.log('makeSession_SELECT_expired_query2_Error: ' + error2);
+                            console.log('makeSession_SELECT_expired_query2_Error: ' + error2 + '  /  email: '+address+ '  /  '+date);
                             res.json({ ok: false, msg: '정보 저장중 오류가 발생하였습니다.' });
                         } else {
                         }
@@ -385,7 +428,7 @@ function makeSession(address, res, msg) {
     const session = hashing(salt2, param);
     db.query('SELECT * FROM sessions_table WHERE user_session=?', [session], (error, result) => {
         if (error) {
-            console.log('makeSession_SELECT_query_Error: ' + error);
+            console.log('makeSession_SELECT_query_Error: ' + error + '  /  email: '+address+ '  /  '+date);
             res.json({ ok: false, msg: '정보 저장중 오류가 발생하였습니다.' });
         } else if (result.length >= 1) {
             makeSession(address, res, msg);
@@ -395,7 +438,7 @@ function makeSession(address, res, msg) {
                 [address],
                 (error2, result2) => {
                     if (error2) {
-                        console.log('makeSession_SELECT_query2_Error: ' + error2);
+                        console.log('makeSession_SELECT_query2_Error: ' + error2 + '  /  email: '+address+ '  /  '+date);
                         res.json({ ok: false, msg: '정보 저장중 오류가 발생하였습니다.' });
                     } else if (result2.length >= 1) {
                         db.query(
@@ -403,7 +446,7 @@ function makeSession(address, res, msg) {
                             [session, address],
                             (error3, result3) => {
                                 if (error3) {
-                                    console.log('makeSession_SELECT_query3_Error: ' + error3);
+                                    console.log('makeSession_SELECT_query3_Error: ' + error3 + '  /  email: '+address+ '  /  '+date);
                                     res.json({
                                         ok: false,
                                         msg: '정보 저장중 오류가 발생하였습니다.',
@@ -419,7 +462,7 @@ function makeSession(address, res, msg) {
                             [session, address],
                             (error4, result4) => {
                                 if (error4) {
-                                    console.log('makeSession_SELECT_query4_Error: ' + error4);
+                                    console.log('makeSession_SELECT_query4_Error: ' + error4 + '  /  email: '+address+ '  /  '+date);
                                     res.json({
                                         ok: false,
                                         msg: '정보 저장중 오류가 발생하였습니다.',
