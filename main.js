@@ -290,6 +290,68 @@ app.post('/faq', (req, res) => {
     }
 });
 
+app.post('/faqwrite', (req, res) => {
+    let session = req.body.sessionID;
+    let title = req.body.faqTitle;
+    let main = req.body.faqMain;
+    let date = new Date();
+    let ip = requestIp.getClientIp(req);
+    if(session !== undefined){
+        if(nInjectionCheck(session)){
+            db.query('SELECT * FROM sessions_table WHERE user_session=?',
+                    [session],
+                    (error, result) => {
+                if(error){
+                    console.log('faqwrite_SELECT_query_Error: '+error+'  /  session: '+session+'  /  '+date);
+                    res.json({ok: false, msg:'세션확인중 오류가 발생하였습니다.'});
+                }
+                else if(result.length <= 0){
+                    res.json({ok: false, msg:'만료된 세션 입니다.'});
+                }
+                else{
+                    if(title.length > 100){
+                        res.json({ok: false, msg:'제목의 길이가 너무 깁니다.'});
+                    }
+                    else if(main.length > 500){
+                        res.json({ok: false, msg:'본문의 길이가 너무 깁니다.'});
+                    }
+                    else {
+                        db.query('INSERT INTO faqs_table(faq_process, faq_option, faq_from_whom, faq_title, faq_main, faq_created_at, faq_updated_at) VALUES("요청완료","private", ?, ?, ?, now(), now())',
+                                [result[0].user_session_address, title, main],
+                                (error2, result2) => {
+                            if(error2){
+                                console.log('faqwrite_INSERT_query_Error: '+error2+'  /  email: '+result[0].user_session_address+'  /  '+date);
+                                res.json({ok: false, msg:'문의사항 저장중 오류가 발생하였습니다.'});
+                            }
+                            else{
+                                db.query('INSERT INTO answers_table(answer_option, answer_to_whom, answer_title, answer_main, answer_created_at, answer_updated_at) VALUES("private", ?, ?, ?, now(), now())',
+                                        [result[0].user_session_address, null, null],
+                                        (error3, result3) => {
+                                    if(error3){
+                                        console.log('faqwrite_INSERT_query2_Error: '+error3+'  /  email: '+result[0].user_session_address+'  /  '+date);
+                                        res.json({ok: false, msg:'문의사항 저장중 오류가 발생하였습니다.'});
+                                    }
+                                    else{
+                                        console.log('FAQ_WRITE  /  option: private  /  email: '+result[0].user_session_address+'  /  ip: '+ip+'  /  '+date);
+                                        res.json({ok: true, msg:'문의사항이 정상적으로 작성되었습니다.'});
+                                    }
+                                })
+                            }
+                        })   
+                    }
+                }
+            })
+        }
+        else{
+            console.log('SESSION_INJECTION  /  email: ' + '  /  ip: ' + ip + '  /  ' + date);
+            res.json({ ok: false, msg: '유효하지 않은 세션 값 입니다.' });
+        }
+    }
+    else{
+        
+    }
+})
+
 app.listen(process.env.PORT, '0.0.0.0', () => {
     console.log(`${process.env.PORT}번 포트에서 대기중`);
 });
