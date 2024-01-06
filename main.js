@@ -223,6 +223,7 @@ app.post('/session', (req, res) => {
 app.post('/signout', (req, res) => {
     let session = req.body.sessionID;
     let date = new Date();
+    let ip = requestIp.getClientIp(req);
     if (nInjectionCheck(session)) {
         db.query('DELETE FROM sessions_table WHERE user_session=?', [session], (error, result) => {
             if (error) {
@@ -232,8 +233,7 @@ app.post('/signout', (req, res) => {
                 res.json({ ok: true, msg: '로그아웃 성공' });
             }
         });
-    } else 
-        let ip = requestIp.getClientIp(req);
+    } else {
         console.log('SESSION_INJECTION  /  email: ' + '  /  ip: ' + ip + '  /  ' + date);
         res.json({ ok: false, msg: '유효하지 않은 세션 값 입니다.' });
     }
