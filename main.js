@@ -245,23 +245,23 @@ app.post('/faq', (req, res) => {
     let date = new Date();
     if (session !== undefined) {
         if (nInjectionCheck(session)) {
-            db.query('SELECT user_session_address FROM sessions_table WHERE user_session=?',
+            db.query('SELECT * FROM sessions_table WHERE user_session=?',
                     [session],
                     (error, result) => {
                 if(error){
                     console.log('faq_SELECT_query_Error: '+error + '  /  session: '+session+'  /  '+date);
-                    req.json({ok: false, msg:'세션을 인증하던중 오류가 발생하였습니다.'});
+                    res.json({ok: false, msg:'세션을 인증하던중 오류가 발생하였습니다.'});
                 }
                 else if(result.length <= 0){
-                    req.json({ok: false, msg:'만료된 세션 입니다.'});
+                    res.json({ok: false, msg:'만료된 세션 입니다.'});
                 }
                 else{
                     db.query('SELECT COUNT(seq) FROM faqs_table WHERE faq_from_whom=? AND faq_option=private',
-                            [result[0]],
+                            [result[0].user_session_address],
                             (error2, result2) => {
                         if(error2){
                             console.log('faq_SELECT_query2_Error: '+error2 + '  /  session: '+session+'  /  '+date);
-                            req.json({ok: false, msg:'문의정보 확인중 오류가 발생하였습니다.'});
+                            res.json({ok: false, msg:'문의정보 확인중 오류가 발생하였습니다.'});
                         }
                         else{
                             let faqNum = result2;
@@ -270,10 +270,10 @@ app.post('/faq', (req, res) => {
                                 (error3, result3) => {
                                 if(error3){
                                     console.log('faq_SELECT_query3_Error: '+error3 + '  /  session: '+session+'  /  '+date);
-                                    req.json({ok: false, msg:'문의정보 확인중 오류가 발생하였습니다.'});
+                                    res.json({ok: false, msg:'문의정보 확인중 오류가 발생하였습니다.'});
                                 }
                                 else{
-                                    req.json({ok: true, msg:'문의정보 확인 성공', faqNum: faqNum, faqList: result3});
+                                    res.json({ok: true, msg:'문의정보 확인 성공', faqNum: faqNum, faqList: result3});
                                 }
                             }
                         }
