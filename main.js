@@ -265,17 +265,15 @@ app.post('/faq', (req, res) => {
                         }
                         else{
                             let faqNum = result2;
-                            console.log(faqNum[0].cnt);
-                            console.log(result2.cnt);
                             db.query('SELECT * FROM faqs_table WHERE faq_from_whom=? AND faq_options=private ORDER BY seq DESC Limit ?, ?',
-                                    [result[0].user_session_address, 10*(page-1), (faqNum>=10*(page-1)+10 ? 10 : faqNum-(10*(page-1)))]),
+                                    [result[0].user_session_address, 10*(page-1), (faqNum[0].cnt>=10*(page-1)+10 ? 10 : faqNum[0].cnt-(10*(page-1)))]),
                                 (error3, result3) => {
                                 if(error3){
                                     console.log('faq_SELECT_query3_Error: '+error3 + '  /  session: '+session+'  /  '+date);
                                     res.json({ok: false, msg:'문의정보 확인중 오류가 발생하였습니다.'});
                                 }
                                 else{
-                                    res.json({ok: true, msg:'문의정보 확인 성공', faqNum: faqNum, faqList: result3});
+                                    res.json({ok: true, msg:'문의정보 확인 성공', faqNum: faqNum[0].cnt, faqList: result3});
                                 }
                             }
                         }
