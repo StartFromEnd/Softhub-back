@@ -15,6 +15,7 @@ const cookieParser = require('cookie-parser');
 
 const corsOptions = {
     origin: [
+        'https://softhub-picwm.run.goorm.site/',
         'https://softhub-end.netlify.app',
         'https://softhub-end.netlify.app/signIn',
         'https://main--softhub-end.netlify.app',
@@ -126,9 +127,10 @@ function checkInfo(
     }
 }
 
-app.post('/signin', (req, res) => {
-    let email = req.body.signinEmail;
-    let password = req.body.signinPassword;
+app.post('/signIn', (req, res) => {
+    console.log('hi');
+    let email = req.body.email;
+    let password = req.body.password;
     if (epInjectionCheck(email, password)) {
         db.query('SELECT * FROM users_table WHERE user_address=?', [email], (error, userInfo) => {
             let date = new Date();
