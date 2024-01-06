@@ -256,8 +256,8 @@ app.post('/faq', (req, res) => {
                     res.json({ok: false, msg:'만료된 세션 입니다.'});
                 }
                 else{
-                    db.query('SELECT COUNT(seq) FROM faqs_table WHERE faq_from_whom=? AND faq_option=private',
-                            [result[0].user_session_address],
+                    db.query('SELECT COUNT(seq) FROM faqs_table WHERE faq_from_whom=? AND faq_option=?',
+                            [result[0].user_session_address, 'private'],
                             (error2, result2) => {
                         if(error2){
                             console.log('faq_SELECT_query2_Error: '+error2 + '  /  session: '+session+'  /  '+date);
