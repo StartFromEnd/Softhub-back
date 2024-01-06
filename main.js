@@ -163,7 +163,7 @@ app.post('/signIn', (req, res) => {
     }
 });
 
-app.post('/session', (req, res) => {
+app.post('/sessionCheck', (req, res) => {
     let sessionID = req.body.sessionID;
     if (nInjectionCheck(sessionID)) {
         db.query(
