@@ -265,6 +265,8 @@ app.post('/faq', (req, res) => {
                         }
                         else{
                             let faqNum = result2;
+                            console.log(faqNum);
+                            console.log(result2);
                             db.query('SELECT * FROM faqs_table WHERE faq_from_whom=? AND faq_options=private ORDER BY seq DESC Limit ?, ?',
                                     [result[0].user_session_address, 10*(page-1), (faqNum>=10*(page-1)+10 ? 10 : faqNum-(10*(page-1)))]),
                                 (error3, result3) => {
