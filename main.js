@@ -230,7 +230,7 @@ app.post('/signout', (req, res) => {
                 console.log('signout_DELETE_query_Error: ' + error + '  /  session: '+session+'  /  '+date);
                 res.json({ ok: false, msg: '로그아웃중 오류가 발생하였습니다.' });
             } else {
-                res.json({ '로그아웃 성공' });
+                res.json({ ok: true, msg: '로그아웃 성공' });
             }
         });
     } else {
