@@ -230,7 +230,7 @@ app.post('/signout', (req, res) => {
                 console.log('signout_DELETE_query_Error: ' + error + '  /  session: '+session+'  /  '+date);
                 res.json({ ok: false, msg: '로그아웃중 오류가 발생하였습니다.' });
             } else {
-                res.json({ ok: true, msg: '로그아웃 성공' });
+                res.json({ '로그아웃 성공' });
             }
         });
     } else {
@@ -256,7 +256,7 @@ app.post('/faq', (req, res) => {
                     res.json({ok: false, msg:'만료된 세션 입니다.'});
                 }
                 else{
-                    db.query('SELECT COUNT(seq) FROM faqs_table WHERE faq_from_whom=? AND faq_option=?',
+                    db.query('SELECT COUNT(*) FROM faqs_table WHERE faq_from_whom=? AND faq_option=?',
                             [result[0].user_session_address, 'private'],
                             (error2, result2) => {
                         if(error2){
@@ -266,7 +266,7 @@ app.post('/faq', (req, res) => {
                         else{
                             let faqNum = result2;
                             db.query('SELECT * FROM faqs_table WHERE faq_from_whom=? AND faq_options=private ORDER BY seq DESC Limit ?, ?',
-                                    [result[0], 10*(page-1), (faqNum>=10*(page-1)+10 ? 10 : faqNum-(10*(page-1)))]),
+                                    [result[0].user_session_address, 10*(page-1), (faqNum>=10*(page-1)+10 ? 10 : faqNum-(10*(page-1)))]),
                                 (error3, result3) => {
                                 if(error3){
                                     console.log('faq_SELECT_query3_Error: '+error3 + '  /  session: '+session+'  /  '+date);
