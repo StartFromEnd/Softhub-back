@@ -265,8 +265,8 @@ app.post('/faq', (req, res) => {
                         }
                         else{
                             let faqNum = result2;
-                            db.query('SELECT * FROM faqs_table WHERE faq_from_whom=? AND faq_option=private ORDER BY seq DESC Limit ?, ?',
-                                    [result[0].user_session_address, 10*(page-1), (faqNum[0].cnt>=10*(page-1)+10 ? 10 : faqNum[0].cnt-(10*(page-1)))]),
+                            db.query('SELECT * FROM faqs_table WHERE faq_from_whom=? AND faq_option=? ORDER BY seq DESC Limit ?, ?',
+                                    [result[0].user_session_address, 'private', 10*(page-1), (faqNum[0].cnt>=10*(page-1)+10 ? 10 : faqNum[0].cnt-(10*(page-1)))]),
                                 (error3, result3) => {
                                 if(error3){
                                     console.log('faq_SELECT_query3_Error: '+error3 + '  /  session: '+session+'  /  '+date);
