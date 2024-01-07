@@ -330,7 +330,7 @@ app.post('/profil', async(req, res) => {
             
             conn = await mysql.getConnection();
             
-            const [ result ] = conn.query(query1, sessionID);
+            const [ result ] = await conn.query(query1, sessionID);
             
             if(result.length <= 0){
                 conn.release();
@@ -341,7 +341,7 @@ app.post('/profil', async(req, res) => {
             
             const query2 = 'SELECT * FROM users_table WHERE user_address = ?';
             
-            const [ result2 ] = conn.query(query2, result[0].user_session_address);
+            const [ result2 ] = await conn.query(query2, result[0].user_session_address);
             
             if(result2.length <= 0){
                 conn.release();
