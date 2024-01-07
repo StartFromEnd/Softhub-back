@@ -457,8 +457,6 @@ function nInjectionCheck(n) {
 }
 
 const smtpTransport = nodeMailer.createTransport({
-    pool: true,
-    maxConnections: 1,
     service: 'naver',
     host: 'smtp.naver.com',
     port: 587,
