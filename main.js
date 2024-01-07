@@ -535,9 +535,9 @@ async function makeSession(conn, req, res, resJson) {
 
         if (result4.length >= 1) {
             const query5 =
-                'UPDATE sessions_table SET user_session=?, session_created_at=now() WHERE user_session_address=?';
+                'UPDATE sessions_table SET user_session=?, session_created_at=? WHERE user_session_address=?';
 
-            const [result5] = await conn.query(query5, [session, address]);
+            const [result5] = await conn.query(query5, [session, (req.body.variable1 == 'true' ? 'DATE_ADD(now(), INTERVAL 10 year)' : 'now()'), address]);
 
             resJson.result = [session, MaxAge];
 
