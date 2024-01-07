@@ -55,11 +55,11 @@ app.post('/signup', async(req, res) => {
     
     if (epInjectionCheck(email, password) && nInjectionCheck(nickname)) {
         try{
-            const query1 = 'SELECT user_address FROM users_table WHERE user_address = '+`${email}`;
+            const query1 = 'SELECT user_address FROM users_table WHERE user_address = ?';
             
             conn = await mysql.getConnection();
             
-            const [ result ] = await conn.query(query1);
+            const [ result ] = await conn.query(query1, email);
             
             console.log(result);
             
@@ -71,6 +71,8 @@ app.post('/signup', async(req, res) => {
             
             resJson.msg = '데이터를 확인하던 중 오류가 발생하였습니다. _SIGN_UP_Error_001';
             resJson.result = error.message;
+            
+            conn.release();
         }
     } else {
         resJson.msg='적절하지 않은 문자 (한글, 영어, 숫자, !, ?, @, . 외의 문자) 가 포함되어 있습니다.';
