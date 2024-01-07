@@ -36,7 +36,7 @@ app.use(cookieParser());
 
 var MaxAge = 400; //days
 
-app.post('/signup', async (req, res) => {
+app.post('/signUp', async (req, res) => {
     const salt = crypto.randomBytes(128).toString('base64');
     let email = req.body.email;
     let password = req.body.password;
