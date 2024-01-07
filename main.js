@@ -101,7 +101,7 @@ app.post('/signup', async (req, res) => {
                 resJson.ok = true;
                 resJson.msg = '회원가입에 성공하셨습니다.';
 
-                makeSession(conn, email, res, resJson);
+                makeSession(conn, req, res, resJson);
                 conn.release();
                 return;
             } else {
@@ -521,7 +521,8 @@ var emailAuthorize = (req, res, resJson) => {
     });
 };
 
-async function makeSession(conn, address, res, resJson) {
+async function makeSession(conn, req, res, resJson) {
+    let address = req.body.email;
     let date = new Date();
     let ip = requestIp.getClientIp(req);
     try {
