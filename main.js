@@ -527,7 +527,7 @@ async function makeSession(conn, req, res, resJson) {
     let ip = requestIp.getClientIp(req);
     try {
         const query1 =
-            'SELECT seq FROM sessions_table WHERE DATA_FORMAT(DATE_ADD(session_created_at, INTERVAL ? hour), "%Y%m%d%H") <= DATE_FORMAT(now(), "%Y%m%d%H")';
+            'SELECT seq FROM sessions_table WHERE DATE_FORMAT(DATE_ADD(session_created_at, INTERVAL ? hour), "%Y%m%d%H") <= DATE_FORMAT(now(), "%Y%m%d%H")';
 
         const [result] = await conn.query(query1, MaxAge);
 
@@ -552,7 +552,7 @@ async function makeSession(conn, req, res, resJson) {
         
         const query3 = 'SELECT * FROM sessions_table WHERE user_session = ?';
         
-        const [ result3 ] = await result.then(conn.query(query3, session));
+        const [ result3 ] = await conn.query(query3, session);
         
         if(result3.length >= 1){
             makeSession(conn, address, res, resJson);
@@ -561,7 +561,7 @@ async function makeSession(conn, req, res, resJson) {
         
         const query4 = 'SELECT * FROM sessions_table WHERE user_session_address = ?';
         
-        const [ result4 ] = await result3.then(conn.query(query4, address));
+        const [ result4 ] = await conn.query(query4, address);
         
         if(result4.length >= 1){
             const query5 = 'UPDATE sessions_table SET user_session=?, session_created_at=now() WHERE user_session_address=?';
