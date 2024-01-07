@@ -36,61 +36,92 @@ app.use(cookieParser());
 
 var MaxAge = 72; //hours
 
-app.post('/signup', async(req, res) => {
+app.post('/signup', async (req, res) => {
     const salt = crypto.randomBytes(128).toString('base64');
     let email = req.body.email;
     let password = req.body.password;
     let nickname = req.body.nickname;
     let emailAuth = req.body.variable1;
-    
+
     let date = new Date();
     let ip = requestIp.getClientIp(req);
-    
+
     let resJson = {
         ok: false,
         msg: '',
-        result: null
+        result: null,
     };
     let conn = null;
-    
+
     if (epInjectionCheck(email, password) && nInjectionCheck(nickname)) {
-        try{
+        try {
+            //check is there same email
             const query1 = 'SELECT user_address FROM users_table WHERE user_address = ?';
-            
+
             conn = await mysql.getConnection();
-            
-            const [ result ] = await conn.query(query1, email);
-            
-            console.log(date.getTime());
-            
-            if(result.length >= 1){
+
+            const [result] = await conn.query(query1, email);
+
+            if (result.length >= 1) {
+                conn.release();
                 resJson.msg = '이미 존재하는 이메일 계정 입니다.';
-                conn.release();
+                res.send(resJson);
                 return;
             }
-            
+
+            //check is there same nickname
             const query2 = 'SELECT user_id FROM users_table WHERE user_id = ?';
-            
-            const [ result2 ] = await conn.query(query2, nickname);
-            
-            if(result2.length >= 1){
-                resJson.msg = '이미 존재하는 닉네임 입니다.';
+
+            const [result2] = await conn.query(query2, nickname);
+
+            if (result2.length >= 1) {
                 conn.release();
+                resJson.msg = '이미 존재하는 닉네임 입니다.';
+                res.send(resJson);
                 return;
             }
-            
-        }
-        catch(error){
-            console.log('_SIGN_UP_Error  /  ip: '+ip+'  /  '+date.getTime());
+
+            //authorize email
+            if (emailAuth == 'null') {
+                conn.release();
+                emailAuthorize(req, res, resJson);
+                return;
+            } else if (emailAuth == 'true') {
+                const query3 =
+                    'INSERT INTO users_table(user_id, user_position, user_pw, user_salt, user_address, created_at, updated_at) VALUES(?, ?, ?, ?, ?, now(), now())';
+
+                const [result3] = await conn.query(query3, [
+                    nickname,
+                    'supporter',
+                    hashing(salt, password),
+                    salt,
+                    email,
+                ]);
+
+                resJson.ok = true;
+                resJson.msg = '회원가입에 성공하셨습니다.';
+
+                makeSession(conn, email, res, resJson);
+                conn.release();
+                return;
+            } else {
+                resJson.msg = '인증번호가 일치하지 않습니다.';
+            }
+            conn.release();
+        } catch (error) {
+            let stamp = date.getTime();
+            console.log('_SIGN_UP_Error  /  ip: ' + ip + '  /  ' + stamp);
             console.log(error);
-            
-            resJson.msg = '데이터를 확인하던 중 오류가 발생하였습니다. Error_code: '+date.getTime();
-            resJson.result = error.message;
-            
+
+            resJson.msg =
+                '데이터를 확인하던 중 오류가 발생하였습니다. _SIGN_UP_Error: ' + `${stamp}`;
+            resJson.result = [error.message];
+
             conn.release();
         }
     } else {
-        resJson.msg='적절하지 않은 문자 (한글, 영어, 숫자, !, ?, @, . 외의 문자) 가 포함되어 있습니다.';
+        resJson.msg =
+            '적절하지 않은 문자 (한글, 영어, 숫자, !, ?, @, . 외의 문자) 가 포함되어 있습니다.';
     }
     res.send(resJson);
 });
@@ -422,7 +453,7 @@ function nInjectionCheck(n) {
         return true;
     }
 }
-/*
+
 const smtpTransport = nodeMailer.createTransport({
     pool: true,
     maxConnections: 1,
@@ -446,10 +477,10 @@ var generateRandomNumber = (min, max) => {
     return randNum;
 };
 
-var emailAuthorize = (req, res) => {
+var emailAuthorize = (req, res, resJson) => {
     const number = generateRandomNumber(111111, 999999);
 
-    const mail = req.body.signupEmail;
+    const mail = req.body.email;
 
     const mailOptions = {
         from: process.env.AUTH_EMAIL_ADDRESS,
@@ -461,110 +492,110 @@ var emailAuthorize = (req, res) => {
     smtpTransport.sendMail(mailOptions, (error, response) => {
         console.log('response: ' + response);
         let date = new Date();
+        let ip = requestIp.getClientIp(req);
         if (error) {
-            console.log('sendMail_Error: ' + error + '  /  email: '+mail+'  /  '+date);
-            res.json({ ok: false, msg: '메일 전송에 실패하였습니다.' });
+            let stamp = date.getTime();
+            console.log(
+                '_SEND_EMAIL_Error  /  ip: ' + ip + '  /  email: ' + mail + '  /  ' + stamp
+            );
+            console.log(error);
+            resJson.msg = '인증메일 전송에 실패하였습니다. _SEND_EMAIL_Error: ' + `${stamp}`;
+            resJson.result = [error.message];
+            res.send(resJson);
             smtpTransport.close();
         } else {
-            let ip = requestIp.getClientIp(req);
-            console.log('AUTH_EMAIL  /  email: ' + mail + '  /  ip: ' + ip + '  /  ' + date);
-            res.json({
-                ok: true,
-                msg: mail + '계정으로 인증번호 전송에 성공하였습니다.',
-                authNum: number,
-            });
+            console.log(
+                '_SEND_EMAIL_Success  /  ip: ' +
+                    ip +
+                    '  /  email: ' +
+                    mail +
+                    '  /  ' +
+                    date.getTime()
+            );
+            resJson.ok = true;
+            resJson.msg = `${mail}` + ' 으로 인증메일 전송에 성공하였습니다.';
+            resJson.result = [number];
+            res.send(resJson);
             smtpTransport.close();
         }
     });
 };
 
-function makeSession(address, res, msg) {
+async function makeSession(conn, address, res, resJson) {
     let date = new Date();
-    db.query(
-        'select seq from sessions_table where date_format(DATE_ADD(session_created_at, INTERVAL ? hour), "%Y%m%d%H") <= date_format(now(), "%Y%m%d%H")',
-        [MaxAge],
-        (error, result) => {
-            if (error) {
-                console.log('makeSession_SELECT_expired_query_Error: ' + error + '  /  email: '+address+ '  /  '+date);
-                res.json({ ok: false, msg: '정보 저장중 오류가 발생하였습니다.' });
-            } else if (result.length >= 1) {
-                let target = '';
-                let array = [];
-                for (var i = 0; i < result.length; i++) {
-                    target += '?';
-                    array.push(result[i].seq);
-                    if (!(i >= result.length - 1)) {
-                        target += ',';
-                    }
+    let ip = requestIp.getClientIp(req);
+    try {
+        const query1 =
+            'SELECT seq FROM sessions_table WHERE DATE_FORMAT(DATE_ADD(session_created_at, INTERVAL ? hour), "%Y%m%d%H") <= DATA_FORMAT(now(), "%Y%m%d%H")';
+
+        const [result] = await conn.query(query1, MaxAge);
+
+        if (result.length >= 1) {
+            let target = '';
+            let array = [];
+            for (var i = 0; i < result.length; i++) {
+                target += '?';
+                array.push(result[i].seq);
+                if (!(i >= result.length - 1)) {
+                    target += ',';
                 }
-                db.query(
-                    'delete from sessions_table where seq in(' + target + ')',
-                    array,
-                    (error2, result2) => {
-                        if (error2) {
-                            console.log('makeSession_SELECT_expired_query2_Error: ' + error2 + '  /  email: '+address+ '  /  '+date);
-                            res.json({ ok: false, msg: '정보 저장중 오류가 발생하였습니다.' });
-                        } else {
-                        }
-                    }
-                );
-            } else {
             }
+            const query2 = 'DELETE FROM sessions_table WHERE seq in(' + target + ')';
+            
+            const [ result2 ] = await conn.query(query2, array);
         }
-    );
-    const salt2 = crypto.randomBytes(128).toString('base64');
-    const param = Math.floor(Math.random() * (999999 - 111111 + 1)) + 111111;
-    const session = hashing(salt2, param);
-    db.query('SELECT * FROM sessions_table WHERE user_session=?', [session], (error, result) => {
-        if (error) {
-            console.log('makeSession_SELECT_query_Error: ' + error + '  /  email: '+address+ '  /  '+date);
-            res.json({ ok: false, msg: '정보 저장중 오류가 발생하였습니다.' });
-        } else if (result.length >= 1) {
-            makeSession(address, res, msg);
-        } else {
-            db.query(
-                'SELECT * FROM sessions_table WHERE user_session_address=?',
-                [address],
-                (error2, result2) => {
-                    if (error2) {
-                        console.log('makeSession_SELECT_query2_Error: ' + error2 + '  /  email: '+address+ '  /  '+date);
-                        res.json({ ok: false, msg: '정보 저장중 오류가 발생하였습니다.' });
-                    } else if (result2.length >= 1) {
-                        db.query(
-                            'UPDATE sessions_table SET user_session=?, session_created_at=now() WHERE user_session_address=?',
-                            [session, address],
-                            (error3, result3) => {
-                                if (error3) {
-                                    console.log('makeSession_SELECT_query3_Error: ' + error3 + '  /  email: '+address+ '  /  '+date);
-                                    res.json({
-                                        ok: false,
-                                        msg: '정보 저장중 오류가 발생하였습니다.',
-                                    });
-                                } else {
-                                    res.json({ ok: true, msg: msg, cookie: [session, MaxAge] });
-                                }
-                            }
-                        );
-                    } else {
-                        db.query(
-                            'INSERT INTO sessions_table(user_session, user_session_address, session_created_at) VALUES(?, ?, now())',
-                            [session, address],
-                            (error4, result4) => {
-                                if (error4) {
-                                    console.log('makeSession_SELECT_query4_Error: ' + error4 + '  /  email: '+address+ '  /  '+date);
-                                    res.json({
-                                        ok: false,
-                                        msg: '정보 저장중 오류가 발생하였습니다.',
-                                    });
-                                } else {
-                                    res.json({ ok: true, msg: msg, cookie: [session, MaxAge] });
-                                }
-                            }
-                        );
-                    }
-                }
-            );
+        
+        const salt2 = crypto.randomBytes(128).toString('base64');
+        const param = Math.floor(Math.random() * (999999 - 111111 + 1)) + 111111;
+        const session = hashing(salt2, param);
+        
+        const query3 = 'SELECT * FROM sessions_table WHERE user_session = ?';
+        
+        const [ result3 ] = await conn.query(query3, session);
+        
+        if(result3.length >= 1){
+            makeSession(conn, address, res, resJson);
+            return;
         }
-    });
+        
+        const query4 = 'SELECT * FROM sessions_table WHERE user_session_address = ?';
+        
+        const [ result4 ] = await conn.query(query4, address);
+        
+        if(result4.length >= 1){
+            const query5 = 'UPDATE sessions_table SET user_session=?, session_created_at=now() WHERE user_session_address=?';
+            
+            const [ result5 ] = await conn.query(query5, [session, address]);
+            
+            resJson.result = [session, MaxAge];
+            
+            res.send(resJson);
+            
+            return;
+        }
+        else{
+            const query6 = 'INSERT INTO sessions_table(user_session, user_session_address, session_created_at) VALUES(?, ?, now())';
+            
+            const [ result6 ] = await conn.query(query6, [session, address]);
+            
+            resJson.result = [session, MaxAge];
+            
+            res.send(resJson);
+            
+            return;
+        }
+        
+    } catch (error) {
+        let stamp = date.getTime();
+        console.log(
+            '_MAKE_SESSION_Error  /  ip: ' + ip + '  /  email: ' + address + '  /  ' + stamp
+        );
+        console.log(error);
+        resJson.ok = false;
+        resJson.msg =
+            '데이터를 확인하던 중 오류가 발생하였습니다. _MAKE_SESSION_Error: ' + `${stamp}`;
+        resJson.result = [error.message];
+        res.send(resJson);
+        return;
+    }
 }
-*/
