@@ -1,4 +1,5 @@
 require('dotenv').config();
+
 require('date');
 const requestIp = require('request-ip');
 
@@ -10,8 +11,13 @@ const http = require('http');
 const cors = require('cors');
 
 const crypto = require('crypto');
+
 const cookie = require('cookie');
 const cookieParser = require('cookie-parser');
+
+const nodeMailer = require('nodemailer');
+
+const mysql = require('./mysql');
 
 const corsOptions = {
     origin: [
@@ -30,34 +36,48 @@ app.use(cookieParser());
 
 var MaxAge = 72; //hours
 
-app.post('/signup', (req, res) => {
+app.post('/signup', async(req, res) => {
     const salt = crypto.randomBytes(128).toString('base64');
-    let email = req.body.signupEmail;
-    let password = req.body.signupPassword;
-    let nickname = req.body.signupNickname;
-    let emailAuth = req.body.signupEmailAuth;
+    let email = req.body.email;
+    let password = req.body.password;
+    let nickname = req.body.nickname;
+    let emailAuth = req.body.variable1;
+    
+    let date = new Date();
+    let ip = requestIp.getClientIp(req);
+    
+    let resJson = {
+        ok: false,
+        msg: '',
+        result: null
+    };
+    let conn = null;
+    
     if (epInjectionCheck(email, password) && nInjectionCheck(nickname)) {
-        let isEmailExist;
-        db.query(
-            'SELECT user_address FROM users_table WHERE user_address = ?',
-            [email],
-            (error, mail) => {
-                if (error) {
-                    console.log('signup_SELECT_Error1: ' + error);
-                    res.json({ ok: false, msg: '정보 확인중 오류가 발생하였습니다.' });
-                } else if (mail.length <= 0) {
-                    isEmailExist = false;
-                } else {
-                    isEmailExist = true;
-                }
-                findNickname(isEmailExist, req, res, salt, email, password, nickname, emailAuth);
-            }
-        );
+        try{
+            const query1 = 'SELECT user_address FROM users_table WHERE user_address = '+email;
+            
+            conn = await mysql.getConnection();
+            
+            const [ result ] = await conn.query(query1);
+            
+            console.log(result);
+            
+            conn.release();
+        }
+        catch(error){
+            console.log('_SIGN_UP_Error_001  /  ip: '+ip+'  /  '+date);
+            console.log(error);
+            
+            resJson.msg = '데이터를 확인하던 중 오류가 발생하였습니다. _SIGN_UP_Error_001';
+            resJson.result = error.message;
+        }
     } else {
-        res.json({ ok: false, msg: '적절하지 않은 문자가 포함되어 있습니다.' });
+        resJson.msg='적절하지 않은 문자 (한글, 영어, 숫자, !, ?, @, . 외의 문자) 가 포함되어 있습니다.';
     }
+    res.send(resJson);
 });
-
+/*
 function findNickname(isEmailExist, req, res, salt, email, password, nickname, emailAuth) {
     let isNicknameExist;
     db.query('SELECT user_address FROM users_table WHERE user_id = ?', [nickname], (error, id) => {
@@ -353,7 +373,7 @@ app.post('/faqwrite', (req, res) => {
         
     }
 })
-
+*/
 app.listen(process.env.PORT, '0.0.0.0', () => {
     console.log(`${process.env.PORT}번 포트에서 대기중`);
 });
@@ -365,16 +385,6 @@ function hashing(salt, pw) {
         .digest('hex');
     return hashedPassword;
 }
-
-const mysql = require('mysql');
-
-const db = mysql.createConnection({
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    user: process.env.DB_USER,
-    password: process.env.DB_PW,
-    database: process.env.DB_NAME,
-});
 
 const regexE = /[^a-zA-Z0-9!\?@\.]/;
 const regexP = /[^a-zA-Z0-9!\?@]/;
@@ -395,9 +405,7 @@ function nInjectionCheck(n) {
         return true;
     }
 }
-
-const nodeMailer = require('nodemailer');
-
+/*
 const smtpTransport = nodeMailer.createTransport({
     pool: true,
     maxConnections: 1,
@@ -542,3 +550,4 @@ function makeSession(address, res, msg) {
         }
     });
 }
+*/

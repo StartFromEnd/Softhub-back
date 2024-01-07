@@ -8,6 +8,7 @@
     "express": "^4.18.2",
     "http": "^0.0.1-security",
     "mysql": "^2.18.1",
+    "mysql2": "^3.6.5",
     "nodemailer": "^6.9.8",
     "request-ip": "^3.3.0"
   }
