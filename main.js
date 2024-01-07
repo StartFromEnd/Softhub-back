@@ -187,66 +187,79 @@ app.post('/signIn', async (req, res) => {
     }
     res.send(resJson);
 });
-/*
-app.post('/sessionCheck', (req, res) => {
-    let sessionID = req.body.sessionID;
-    if (nInjectionCheck(sessionID)) {
-        db.query(
-            'SELECT * FROM sessions_table WHERE user_session=?',
-            [sessionID],
-            (error, result) => {
-                let date = new Date();
-                if (error) {
-                    console.log('session_SELECT_query_Error: ' + error + '  /  session: '+sessionID+'  /  '+date);
-                    res.json({ ok: false, msg: '세션 확인중 오류가 발생하였습니다.' });
-                } else if (result.length <= 0) {
-                    res.json({ ok: false, msg: '만료된 세션입니다. 다시 로그인 해 주십시오.' });
-                } else {
-                    db.query(
-                        'SELECT * FROM users_table WHERE user_address=?',
-                        [result[0].user_session_address],
-                        (error2, result2) => {
-                            if (error2) {
-                                console.log('session_SELECT_query2_Error: ' + error2 + '  /  session: '+sessionID+'  /  '+date);
-                                res.json({ ok: false, msg: '정보 확인중 오류가 발생하였습니다.' });
-                            } else if (result2.length <= 0) {
-                                res.json({
-                                    ok: false,
-                                    msg: '존재하지 않는 계정에 대한 세션입니다.',
-                                });
-                            } else {
-                                res.json({
-                                    ok: true,
-                                    msg: '세션인증 완료',
-                                    nickname: result2[0].user_id,
-                                    position: result2[0].user_position,
-                                    address: result2[0].user_address,
-                                });
-                                db.query(
-                                    'UPDATE sessions_table SET session_created_at=DATE_ADD(now(), INTERVAL ? HOUR) WHERE user_session=?',
-                                    [MaxAge, sessionID],
-                                    (error3, result3) => {
-                                        if (error3) {
-                                            console.log('session_UPDATE_query3_Error: ' + error3 + '  /  session: '+sessionID+'  /  '+date);
-                                        } else {
-                                            return;
-                                        }
-                                    }
-                                );
-                            }
-                        }
-                    );
-                }
-            }
-        );
-    } else {
-        let date = new Date();
-        let ip = requestIp.getClientIp(req);
-        console.log('SESSION_INJECTION  /  ip: ' + ip + '  /  ' + date);
-        res.json({ ok: false, msg: '유효하지 않은 세션 값 입니다.' });
-    }
-});
 
+app.post('/sessionCheck', async(req, res) => {
+    let sessionID = req.body.sessionID;
+    
+    let date = new Date();
+    let ip = requestIp.getClientIp(req);
+
+    let resJson = {
+        ok: false,
+        msg: '',
+        result: null,
+    };
+    let conn = null;
+    
+    if (nInjectionCheck(sessionID)) {
+        try{
+            const query1 = 'SELECT * FROM sessions_table WHERE user_session=?';
+            
+            conn = await mysql.getConnection();
+            
+            const [ result ] = await conn.query(query1, sessionID);
+            
+            if(result.length <= 0){
+                conn.release();
+                resJson.msg = '만료된 세션입니다. 다시 로그인 해 주십시오.';
+                res.send(resJson);
+                return;
+            }
+            
+            const query2 = 'SELECT * FROM users_table WHERE user_address=?';
+            
+            const [ result2 ] = await conn.query(query2, result[0].user_session_address);
+            
+            if(result2.length <= 0){
+                conn.release();
+                resJson.msg = '존재하지 않는 계정에 대한 세션입니다. 다시 로그인 해 주십시오.';
+                res.send(resJson);
+                return;
+            }
+            else{
+                resJson.ok = true;
+                resJson.msg = '세션인증에 성공하셨습니다.';
+                resJson.result = [result2[0].user_id, result2[0].user_position, result2[0].user_address];
+                res.send(resJson);
+                
+                const query3 = 'UPDATE sessions_table SET session_created_at=DATE_ADD(now(), INTERVAL ? HOUR) WHERE user_session=?';
+                
+                const [ result3 ] = await conn.query(query3, [MaxAge, sessionID]);
+                
+                conn.release();
+                return;
+            }
+        }
+        catch(error){
+            let stamp = date.getTime();
+
+            console.log('_SESSION_CHECK_Error  /  ip: ' + ip + '  /  ' + stamp);
+            console.log(error);
+
+            resJson.msg =
+                '데이터를 확인하던 중 오류가 발생하였습니다. _SESSION_CHECK_Error: ' + `${stamp}`;
+            resJson.result = [error.message];
+
+            conn.release();
+        }
+        
+    } else {
+        console.log('_SESSION_INJECTION  /  ip: '+ip+'  /  session: '+`${sessionID}`+'  /  '+date);
+        resJson.msg = '세션에 적절하지 않은 문자가 포함되어 있습니다. 서버에 ip가 저장됩니다.';
+    }
+    res.send(resJson);
+});
+/*
 app.post('/signout', (req, res) => {
     let session = req.body.sessionID;
     let date = new Date();
@@ -533,9 +546,9 @@ async function makeSession(conn, req, res, resJson) {
             return;
         } else {
             const query6 =
-                'INSERT INTO sessions_table(user_session, user_session_address, session_created_at) VALUES(?, ?, now())';
+                'INSERT INTO sessions_table(user_session, user_session_address, session_created_at) VALUES(?, ?, ?)';
 
-            const [result6] = await conn.query(query6, [session, address]);
+            const [result6] = await conn.query(query6, [session, address, (req.body.variable1 == 'true' ? 'DATE_ADD(now(), INTERVAL 10 year)' : 'now()')]);
 
             resJson.result = [session, MaxAge];
 
