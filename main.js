@@ -473,13 +473,13 @@ const smtpTransport = nodeMailer.createTransport({
     },
 });
 
-var generateRandomNumber = (min, max) => {
+const generateRandomNumber = (min, max) => {
     let randNum = Math.floor(Math.random() * (max - min + 1)) + min;
 
     return randNum;
 };
 
-var emailAuthorize = async(req, res, resJson) => {
+const emailAuthorize = (req, res, resJson) => {
     const number = generateRandomNumber(111111, 999999);
 
     const mail = req.body.email;
