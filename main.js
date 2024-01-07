@@ -61,15 +61,30 @@ app.post('/signup', async(req, res) => {
             
             const [ result ] = await conn.query(query1, email);
             
-            console.log(result);
+            console.log(date.getTime());
             
-            conn.release();
+            if(result.length >= 1){
+                resJson.msg = '이미 존재하는 이메일 계정 입니다.';
+                conn.release();
+                return;
+            }
+            
+            const query2 = 'SELECT user_id FROM users_table WHERE user_id = ?';
+            
+            const [ result ] = await conn.query(query2, nickname);
+            
+            if(result.length >= 1){
+                resJson.msg = '이미 존재하는 닉네임 입니다.';
+                conn.release();
+                return;
+            }
+            
         }
         catch(error){
-            console.log('_SIGN_UP_Error_001  /  ip: '+ip+'  /  '+date);
+            console.log('_SIGN_UP_Error  /  ip: '+ip+'  /  '+date.getTime());
             console.log(error);
             
-            resJson.msg = '데이터를 확인하던 중 오류가 발생하였습니다. _SIGN_UP_Error_001';
+            resJson.msg = '데이터를 확인하던 중 오류가 발생하였습니다. Error_code: '+date.getTime();
             resJson.result = error.message;
             
             conn.release();
