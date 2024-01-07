@@ -100,7 +100,9 @@ app.post('/signup', async (req, res) => {
 
                 resJson.ok = true;
                 resJson.msg = '회원가입에 성공하셨습니다.';
-
+                
+                console.log('_SIGN_UP_Success  /  ip: '+ip+'  /  email: '+email+'  /  '+date);
+                
                 makeSession(conn, req, res, resJson);
                 conn.release();
                 return;
@@ -159,6 +161,8 @@ app.post('/signIn', async (req, res) => {
                 
                 resJson.ok = true;
                 resJson.msg = '로그인에 성공하셨습니다.';
+                
+                console.log('_SIGN_IN_Success  /  ip: '+ip+'  /  email: '+email+'  /  '+date);
                 
                 makeSession(conn, req, res, resJson);
                 
@@ -259,26 +263,54 @@ app.post('/sessionCheck', async(req, res) => {
     }
     res.send(resJson);
 });
-/*
-app.post('/signout', (req, res) => {
-    let session = req.body.sessionID;
+
+app.post('/signOut', async(req, res) => {
+    let sessionID = req.body.sessionID;
+    
     let date = new Date();
     let ip = requestIp.getClientIp(req);
-    if (nInjectionCheck(session)) {
-        db.query('DELETE FROM sessions_table WHERE user_session=?', [session], (error, result) => {
-            if (error) {
-                console.log('signout_DELETE_query_Error: ' + error + '  /  session: '+session+'  /  '+date);
-                res.json({ ok: false, msg: '로그아웃중 오류가 발생하였습니다.' });
-            } else {
-                res.json({ ok: true, msg: '로그아웃 성공' });
-            }
-        });
-    } else {
-        console.log('SESSION_INJECTION  /  email: ' + '  /  ip: ' + ip + '  /  ' + date);
-        res.json({ ok: false, msg: '유효하지 않은 세션 값 입니다.' });
-    }
-});
+    
+    let resJson = {
+        ok: false,
+        msg: '',
+        result: null,
+    };
+    let conn = null;
+    
+    if (nInjectionCheck(sessionID)) {
+        try{
+            const query1 = 'DELETE FROM sessions_table WHERE user_session=?';
+            
+            conn = await mysql.getConnection();
+            
+            const [ result ] = await conn.query(query1, sessionID);
+            
+            resJson.ok = true;
+            resJson.msg = '로그아웃에 성공하셨습니다.';
+            
+            console.log('_SIGN_OUT_Success  /  ip: '+ip+'  /  '+date);
+            
+            conn.release();
+        }
+        catch(error){
+            let stamp = date.getTime();
 
+            console.log('_SIGN_OUT_Error  /  ip: ' + ip + '  /  ' + stamp);
+            console.log(error);
+
+            resJson.msg =
+                '데이터를 확인하던 중 오류가 발생하였습니다. _SIGN_OUT_Error: ' + `${stamp}`;
+            resJson.result = [error.message];
+
+            conn.release();
+        }
+    } else {
+        console.log('_SESSION_INJECTION  /  ip: '+ip+'  /  session: '+`${sessionID}`+'  /  '+date);
+        resJson.msg = '세션에 적절하지 않은 문자가 포함되어 있습니다. 서버에 ip가 저장됩니다.';
+    }
+    res.send(resJson);
+});
+/*
 app.post('/faq', (req, res) => {
     let session = req.body.sessionID;
     let page = req.body.pageNum;
@@ -480,7 +512,7 @@ var emailAuthorize = (req, res, resJson) => {
                     '  /  email: ' +
                     mail +
                     '  /  ' +
-                    date.getTime()
+                    date
             );
             resJson.ok = true;
             resJson.msg = `${mail}` + ' 으로 인증메일 전송에 성공하였습니다.';
