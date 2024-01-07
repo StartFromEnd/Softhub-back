@@ -83,8 +83,8 @@ app.post('/signUp', async (req, res) => {
 
             //authorize email
             if (emailAuth == 'null') {
-                conn.release();
                 emailAuthorize(req, res, resJson);
+                conn.release();
                 return;
             } else if (emailAuth == 'true') {
                 const query3 =
@@ -479,7 +479,7 @@ var generateRandomNumber = (min, max) => {
     return randNum;
 };
 
-var emailAuthorize = (req, res, resJson) => {
+var emailAuthorize = async(req, res, resJson) => {
     const number = generateRandomNumber(111111, 999999);
 
     const mail = req.body.email;
