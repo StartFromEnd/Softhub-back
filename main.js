@@ -34,7 +34,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors(corsOptions));
 app.use(cookieParser());
 
-var MaxAge = 72; //hours
+var MaxAge = 400; //days
 
 app.post('/signup', async (req, res) => {
     const salt = crypto.randomBytes(128).toString('base64');
@@ -232,7 +232,7 @@ app.post('/sessionCheck', async(req, res) => {
                 resJson.result = [result2[0].user_id, result2[0].user_position, result2[0].user_address];
                 res.send(resJson);
                 
-                const query3 = 'UPDATE sessions_table SET session_created_at=DATE_ADD(now(), INTERVAL ? HOUR) WHERE user_session=?';
+                const query3 = 'UPDATE sessions_table SET session_created_at=DATE_ADD(now(), INTERVAL ? day) WHERE user_session=?';
                 
                 const [ result3 ] = await conn.query(query3, [MaxAge, sessionID]);
                 
@@ -497,7 +497,7 @@ async function makeSession(conn, req, res, resJson) {
     let ip = requestIp.getClientIp(req);
     try {
         const query1 =
-            'SELECT seq FROM sessions_table WHERE DATE_FORMAT(DATE_ADD(session_created_at, INTERVAL ? hour), "%Y%m%d%H") <= DATE_FORMAT(now(), "%Y%m%d%H")';
+            'SELECT seq FROM sessions_table WHERE DATE_FORMAT(DATE_ADD(session_created_at, INTERVAL ? day), "%Y%m%d%H") <= DATE_FORMAT(now(), "%Y%m%d%H")';
 
         const [result] = await conn.query(query1, MaxAge);
 
@@ -535,9 +535,9 @@ async function makeSession(conn, req, res, resJson) {
 
         if (result4.length >= 1) {
             const query5 =
-                'UPDATE sessions_table SET user_session=?, session_created_at=? WHERE user_session_address=?';
+                'UPDATE sessions_table SET user_session=?, session_created_at=now() WHERE user_session_address=?';
 
-            const [result5] = await conn.query(query5, [session, (req.body.variable1 == 'true' ? 'DATE_ADD(now(), INTERVAL 10 year)' : 'now()'), address]);
+            const [result5] = await conn.query(query5, [session, address]);
 
             resJson.result = [session, MaxAge];
 
@@ -546,9 +546,9 @@ async function makeSession(conn, req, res, resJson) {
             return;
         } else {
             const query6 =
-                'INSERT INTO sessions_table(user_session, user_session_address, session_created_at) VALUES(?, ?, ?)';
+                'INSERT INTO sessions_table(user_session, user_session_address, session_created_at) VALUES(?, ?, now())';
 
-            const [result6] = await conn.query(query6, [session, address, (req.body.variable1 == 'true' ? 'DATE_ADD(now(), INTERVAL 10 year)' : 'now()')]);
+            const [result6] = await conn.query(query6, [session, address]);
 
             resJson.result = [session, MaxAge];
 
