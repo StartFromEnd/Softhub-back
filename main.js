@@ -55,7 +55,7 @@ app.post('/signup', async(req, res) => {
     
     if (epInjectionCheck(email, password) && nInjectionCheck(nickname)) {
         try{
-            const query1 = 'SELECT user_address FROM users_table WHERE user_address = '+email;
+            const query1 = 'SELECT user_address FROM users_table WHERE user_address = '+`${email}`;
             
             conn = await mysql.getConnection();
             
