@@ -71,9 +71,9 @@ app.post('/signup', async(req, res) => {
             
             const query2 = 'SELECT user_id FROM users_table WHERE user_id = ?';
             
-            const [ result ] = await conn.query(query2, nickname);
+            const [ result2 ] = await conn.query(query2, nickname);
             
-            if(result.length >= 1){
+            if(result2.length >= 1){
                 resJson.msg = '이미 존재하는 닉네임 입니다.';
                 conn.release();
                 return;
