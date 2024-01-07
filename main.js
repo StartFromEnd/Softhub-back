@@ -324,7 +324,7 @@ app.post('/profil', async(req, res) => {
     };
     let conn = null;
     
-    if(nInjectionCheckjec(sessionID)){
+    if(nInjectionCheck(sessionID)){
         try{
             const query1 = 'SELECT * FROM sessions_table WHERE user_session = ?';
             
