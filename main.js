@@ -356,7 +356,7 @@ app.post('/profil', async(req, res) => {
             }
             conn.release();
         }
-        catch{
+        catch(error){
             let stamp = date.getTime();
 
             console.log('_Profil_Error  /  ip: ' + ip + '  /  ' + stamp);
