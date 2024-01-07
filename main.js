@@ -310,6 +310,71 @@ app.post('/signOut', async(req, res) => {
     }
     res.send(resJson);
 });
+
+app.post('/profil', async(req, res) => {
+    let sessionID = req.body.sessionID;
+    
+    let date = new Date();
+    let ip = requestIp.getClientIp(req);
+    
+    let resJson = {
+        ok: false,
+        msg: '',
+        result: null,
+    };
+    let conn = null;
+    
+    if(nInjectionCheckjec(sessionID)){
+        try{
+            const query1 = 'SELECT * FROM sessions_table WHERE user_session = ?';
+            
+            conn = await mysql.getConnection();
+            
+            const [ result ] = conn.query(query1, sessionID);
+            
+            if(result.length <= 0){
+                conn.release();
+                resJson.msg = '만료된 세션입니다. 다시 로그인 해 주십시오.';
+                res.send(resJson);
+                return;
+            }
+            
+            const query2 = 'SELECT * FROM users_table WHERE user_address = ?';
+            
+            const [ result2 ] = conn.query(query2, result[0].user_session_address);
+            
+            if(result2.length <= 0){
+                conn.release();
+                resJson.msg = '존재하지 않는 계정에 대한 세션입니다. 다시 로그인 해 주십시오.';
+                res.send(resJson);
+                return;
+            }
+            else {
+                resJson.ok = true;
+                resJson.msg = '프로필 로딩에 성공하셨습니다.';
+                resJson.result = [result2[0].user_id, result2[0].user_position, result2[0].user_address, result2[0].user_bank_account];
+            }
+            conn.release();
+        }
+        catch{
+            let stamp = date.getTime();
+
+            console.log('_Profil_Error  /  ip: ' + ip + '  /  ' + stamp);
+            console.log(error);
+
+            resJson.msg =
+                '데이터를 확인하던 중 오류가 발생하였습니다. _Profil_Error: ' + `${stamp}`;
+            resJson.result = [error.message];
+
+            conn.release();
+        }
+    }
+    else {
+        console.log('_SESSION_INJECTION  /  ip: '+ip+'  /  session: '+`${sessionID}`+'  /  '+date);
+        resJson.msg = '세션에 적절하지 않은 문자가 포함되어 있습니다. 서버에 ip가 저장됩니다.';
+    }
+    res.send(resJson);
+})
 /*
 app.post('/faq', (req, res) => {
     let session = req.body.sessionID;
