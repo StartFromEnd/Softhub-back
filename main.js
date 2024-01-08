@@ -378,8 +378,8 @@ app.post('/profil', async(req, res) => {
 
 app.post('/faqList', async(req, res) => {
     let sessionID = req.body.sessionID;
-    let nowPage = req.body.variable1;
-    let option = req.body.variable2;
+    let option = req.body.variable1;
+    let nowPage = req.body.variable2;
     
     let date = new Date();
     let ip = requestIp.getClientIp(req);
