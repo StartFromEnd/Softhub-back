@@ -53,7 +53,7 @@ app.post('/signUp', async (req, res) => {
     };
     let conn = null;
 
-    if (epInjectionCheck(email, password) && nInjectionCheck(nickname)) {
+    if (epInjectionCheck(email, password) && nInjectionCheck(nickname) && nInjectionCheck(emailAuth)) {
         try {
             //check is there same email
             const query1 = 'SELECT user_address FROM users_table WHERE user_address = ?';
@@ -123,7 +123,7 @@ app.post('/signUp', async (req, res) => {
         }
     } else {
         resJson.msg =
-            '적절하지 않은 문자 (한글, 영어, 숫자, !, ?, @, . 외의 문자) 가 포함되어 있습니다.';
+            '요청에 적절하지 않은 문자 (한글, 영어, 숫자, !, ?, @, . 외의 문자) 가 포함되어 있습니다.';
     }
     res.send(resJson);
 });
@@ -391,7 +391,7 @@ app.post('/faqList', async(req, res) => {
     };
     let conn = null;
     
-    if(nInjectionCheck(sessionID)){
+    if(nInjectionCheck(sessionID) && nInjectionCheck(option) && nInjectionCheck(nowPage)){
         try{
             const query1 = 'SELECT * FROM sessions_table WHERE user_session = ?';
             
@@ -438,8 +438,77 @@ app.post('/faqList', async(req, res) => {
         }
     }
     else {
-        console.log('_SESSION_INJECTION  /  ip: '+ip+'  /  session: '+`${sessionID}`+'  /  '+date);
-        resJson.msg = '세션에 적절하지 않은 문자가 포함되어 있습니다. 서버에 ip가 저장됩니다.';
+        console.log('_INJECTION  /  ip: '+ip+'  /  session: '+`${sessionID}`+'  /  option: '+option+'  /  nowPage: '+nowPage+'  /  '+date);
+        resJson.msg = '요청에 적절하지 않은 문자가 포함되어 있습니다. 서버에 ip가 저장됩니다.';
+    }
+    res.send(resJson);
+});
+
+app.post('/faqRead', async(req, res) => {
+    let sessionID = req.body.sessionID;
+    let option = req.body.variable1;
+    let seq = req.body.variable2;
+    
+    let date = new Date();
+    let ip = requestIp.getClientIp(req);
+    
+    let resJson = {
+        ok: false,
+        msg: '',
+        result: null,
+    };
+    let conn = null;
+    
+    if(nInjectionCheck(sessionID) && nInjectionCheck(option) && nInjectionCheck(seq)){
+        try{
+            const query1 = 'SELECT * FROM sessions_table WHERE user_session = ?';
+            
+            conn = await mysql.getConnection();
+            
+            const [ result ] = await conn.query(query1, sessionID);
+            
+            if(result.length <= 0){
+                conn.release();
+                resJson.msg = '만료된 세션입니다. 다시 로그인 해 주십시오.';
+                res.send(resJson);
+                return;
+            }
+            
+            const query2 = 'SELECT * FROM faqs_table WHERE seq=? AND faq_option=? AND faq_from_whom=?';
+            
+            const [ result2 ] = await conn.query(query2, [seq, option, result[0].user_session_address]);
+            
+            const query3 = 'SELECT * FROM answers_table WHERE seq=? AND answer_option=? AND answer_to_whom=?';
+            
+            const [ result3 ] = await conn.query(query3, [seq, option, result[0].user_session_address]);
+            
+            if(result2.length <= 0 || result3.length <= 0){
+                resJson.msg = '존재하지 않는 문의사항 입니다.';
+            }
+            else{
+                resJson.ok = true;
+                resJson.msg = '문의사항 로딩에 성공하셨습니다.';
+                resJson.result = [result2, result3];
+            }
+            
+            conn.release();
+        }
+        catch(error){
+            let stamp = date.getTime();
+
+            console.log('_FAQ_READ_Error  /  ip: ' + ip + '  /  ' + stamp);
+            console.log(error);
+
+            resJson.msg =
+                '데이터를 확인하던 중 오류가 발생하였습니다. _FAQ_READ_Error: ' + `${stamp}`;
+            resJson.result = [error.message];
+
+            conn.release();
+        }
+    }
+    else {
+        console.log('_INJECTION  /  ip: '+ip+'  /  session: '+`${sessionID}`+'  /  option: '+option+'  /  seq: '+seq+'  /  '+date);
+        resJson.msg = '요청에 적절하지 않은 문자가 포함되어 있습니다. 서버에 ip가 저장됩니다.';
     }
     res.send(resJson);
 });
@@ -460,7 +529,7 @@ app.post('/faqWrite', async(req, res) => {
     };
     let conn = null;
     
-    if(nInjectionCheck(sessionID)){
+    if(nInjectionCheck(sessionID) && nInjectionCheck(option) && tInjectionCheck(title) && tInjectionCheck(main)){
         try{
             const query1 = 'SELECT * FROM sessions_table WHERE user_session = ?';
             
@@ -502,8 +571,8 @@ app.post('/faqWrite', async(req, res) => {
         }
     }
     else {
-        console.log('_SESSION_INJECTION  /  ip: '+ip+'  /  session: '+`${sessionID}`+'  /  '+date);
-        resJson.msg = '세션에 적절하지 않은 문자가 포함되어 있습니다. 서버에 ip가 저장됩니다.';
+        console.log('_INJECTION  /  ip: '+ip+'  /  session: '+`${sessionID}`+'  /  option: '+option+'  /  '+date);
+        resJson.msg = '영문, 한글, 숫자, !, ?, @, 온점, 쉼표만 작성하실 수 있습니다.';
     }
     res.send(resJson);
 });
@@ -523,6 +592,7 @@ function hashing(salt, pw) {
 const regexE = /[^a-zA-Z0-9!\?@\.]/;
 const regexP = /[^a-zA-Z0-9!\?@]/;
 const regexN = /[^a-zA-Z0-9가-힣]/;
+const regexT = /[^a-zA-Z0-9ㄱ-ㅎㅏ-ㅣ가-힣!\?@\.,]/;
 
 function epInjectionCheck(e, p) {
     if (e.match(regexE) || p.match(regexP)) {
@@ -536,6 +606,15 @@ function nInjectionCheck(n) {
     if (n.match(regexN)) {
         return false;
     } else {
+        return true;
+    }
+}
+
+function tInjectionCheck(t) {
+    if (t.match(regexT)) {
+        return false;
+    }
+    else {
         return true;
     }
 }
