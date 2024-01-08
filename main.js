@@ -544,6 +544,20 @@ app.post('/faqWrite', async(req, res) => {
                 return;
             }
             
+            if(title.length > 100){
+                conn.release();
+                resJson.msg = '제목은 100자 이내로 작성하셔야 합니다.';
+                res.send(resJson);
+                return;
+            }
+            
+            if(main.length > 500){
+                conn.release();
+                resJson.msg = '본문은 500자 이내로 작성하셔야 합니다.';
+                res.send(resJson);
+                return;
+            }
+            
             const query2 = 'INSERT INTO faqs_table(faq_process, faq_option, faq_from_whom, faq_title, faq_main, faq_created_at, faq_updated_at) VALUES("요청완료", ?, ?, ?, ?, now(), now())';
             
             const [ result2 ] = await conn.query(query2, [option, result[0].user_session_address, title, main]);
