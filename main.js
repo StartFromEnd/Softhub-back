@@ -374,121 +374,140 @@ app.post('/profil', async(req, res) => {
         resJson.msg = '세션에 적절하지 않은 문자가 포함되어 있습니다. 서버에 ip가 저장됩니다.';
     }
     res.send(resJson);
-})
-/*
-app.post('/faq', (req, res) => {
-    let session = req.body.sessionID;
-    let page = req.body.pageNum;
-    let date = new Date();
-    if (session !== undefined) {
-        if (nInjectionCheck(session)) {
-            db.query('SELECT * FROM sessions_table WHERE user_session=?',
-                    [session],
-                    (error, result) => {
-                if(error){
-                    console.log('faq_SELECT_query_Error: '+error + '  /  session: '+session+'  /  '+date);
-                    res.json({ok: false, msg:'세션을 인증하던중 오류가 발생하였습니다.'});
-                }
-                else if(result.length <= 0){
-                    res.json({ok: false, msg:'만료된 세션 입니다.'});
-                }
-                else{
-                    db.query('SELECT COUNT(*) as cnt FROM faqs_table WHERE faq_from_whom=? AND faq_option=?',
-                            [result[0].user_session_address, 'private'],
-                            (error2, result2) => {
-                        if(error2){
-                            console.log('faq_SELECT_query2_Error: '+error2 + '  /  session: '+session+'  /  '+date);
-                            res.json({ok: false, msg:'문의정보 확인중 오류가 발생하였습니다.'});
-                        }
-                        else{
-                            let faqNum = result2;
-                            db.query('SELECT * FROM faqs_table WHERE faq_from_whom=? AND faq_option=? ORDER BY seq DESC Limit ?, ?',
-                                    [result[0].user_session_address, 'private', 10*(page-1), (faqNum[0].cnt>=10*(page-1)+10 ? 10 : faqNum[0].cnt-(10*(page-1)))]),
-                                (error3, result3) => {
-                                if(error3){
-                                    console.log('faq_SELECT_query3_Error: '+error3 + '  /  session: '+session+'  /  '+date);
-                                    res.json({ok: false, msg:'문의정보 확인중 오류가 발생하였습니다.'});
-                                }
-                                else{
-                                    res.json({ok: true, msg:'문의정보 확인 성공', faqNum: faqNum[0].cnt, faqList: result3});
-                                }
-                            }
-                        }
-                    })
-                }
-            })
-        } else {
-            let ip = requestIp.getClientIp(req);
-            console.log('SESSION_INJECTION  /  email: ' + '  /  ip: ' + ip + '  /  ' + date);
-            res.json({ ok: false, msg: '유효하지 않은 세션 값 입니다.' });
-        }
-    } else {
-        
-    }
 });
 
-app.post('/faqwrite', (req, res) => {
-    let session = req.body.sessionID;
-    let title = req.body.faqTitle;
-    let main = req.body.faqMain;
+app.post('/faqList', async(req, res) => {
+    let sessionID = req.body.sessionID;
+    let nowPage = req.body.variable1;
+    let option = req.body.variable2;
+    
     let date = new Date();
     let ip = requestIp.getClientIp(req);
-    if(session !== undefined){
-        if(nInjectionCheck(session)){
-            db.query('SELECT * FROM sessions_table WHERE user_session=?',
-                    [session],
-                    (error, result) => {
-                if(error){
-                    console.log('faqwrite_SELECT_query_Error: '+error+'  /  session: '+session+'  /  '+date);
-                    res.json({ok: false, msg:'세션확인중 오류가 발생하였습니다.'});
-                }
-                else if(result.length <= 0){
-                    res.json({ok: false, msg:'만료된 세션 입니다.'});
-                }
-                else{
-                    if(title.length > 100){
-                        res.json({ok: false, msg:'제목의 길이가 너무 깁니다.'});
-                    }
-                    else if(main.length > 500){
-                        res.json({ok: false, msg:'본문의 길이가 너무 깁니다.'});
-                    }
-                    else {
-                        db.query('INSERT INTO faqs_table(faq_process, faq_option, faq_from_whom, faq_title, faq_main, faq_created_at, faq_updated_at) VALUES("요청완료","private", ?, ?, ?, now(), now())',
-                                [result[0].user_session_address, title, main],
-                                (error2, result2) => {
-                            if(error2){
-                                console.log('faqwrite_INSERT_query_Error: '+error2+'  /  email: '+result[0].user_session_address+'  /  '+date);
-                                res.json({ok: false, msg:'문의사항 저장중 오류가 발생하였습니다.'});
-                            }
-                            else{
-                                db.query('INSERT INTO answers_table(answer_option, answer_to_whom, answer_title, answer_main, answer_created_at, answer_updated_at) VALUES("private", ?, ?, ?, now(), now())',
-                                        [result[0].user_session_address, null, null],
-                                        (error3, result3) => {
-                                    if(error3){
-                                        console.log('faqwrite_INSERT_query2_Error: '+error3+'  /  email: '+result[0].user_session_address+'  /  '+date);
-                                        res.json({ok: false, msg:'문의사항 저장중 오류가 발생하였습니다.'});
-                                    }
-                                    else{
-                                        console.log('FAQ_WRITE  /  option: private  /  email: '+result[0].user_session_address+'  /  ip: '+ip+'  /  '+date);
-                                        res.json({ok: true, msg:'문의사항이 정상적으로 작성되었습니다.'});
-                                    }
-                                })
-                            }
-                        })   
-                    }
-                }
-            })
+    
+    let resJson = {
+        ok: false,
+        msg: '',
+        result: null,
+    };
+    let conn = null;
+    
+    if(nInjectionCheck(sessionID)){
+        try{
+            const query1 = 'SELECT * FROM sessions_table WHERE user_session = ?';
+            
+            conn = await mysql.getConnection();
+            
+            const [ result ] = await conn.query(query1, sessionID);
+            
+            if(result.length <= 0){
+                conn.release();
+                resJson.msg = '만료된 세션입니다. 다시 로그인 해 주십시오.';
+                res.send(resJson);
+                return;
+            }
+            
+            const query2 = 'SELECT COUNT(*) as cnt FROM faqs_table WHERE faq_from_whom=? AND faq_option=?';
+            
+            const [ result2 ] = await conn.query(query2, [result[0].user_session_address, option]);
+            
+            let faqNum = result2[0].cnt;
+            let startFaqNum = 10*(nowPage-1);
+            let limitFaqNum = (faqNum >= startFaqNum+10 ? 10 : faqNum-startFaqNum);
+            
+            const query3 = 'SELECT * FROM faqs_table WHERE faq_from_whom=? AND faq_option=? ORDER BY seq DESC Limit ?, ?';
+            
+            const [ result3 ] = await conn.query(query3, [result[0].user_session_address, option, startFaqNum, limitFaqNum]);
+            
+            resJson.ok = true;
+            resJson.msg = '문의사항 로딩에 성공하셨습니다.';
+            resJson.result = result3;
+            
+            conn.release();
         }
-        else{
-            console.log('SESSION_INJECTION  /  email: ' + '  /  ip: ' + ip + '  /  ' + date);
-            res.json({ ok: false, msg: '유효하지 않은 세션 값 입니다.' });
+        catch(error){
+            let stamp = date.getTime();
+
+            console.log('_FAQ_LIST_Error  /  ip: ' + ip + '  /  ' + stamp);
+            console.log(error);
+
+            resJson.msg =
+                '데이터를 확인하던 중 오류가 발생하였습니다. _FAQ_LIST_Error: ' + `${stamp}`;
+            resJson.result = [error.message];
+
+            conn.release();
         }
     }
-    else{
-        
+    else {
+        console.log('_SESSION_INJECTION  /  ip: '+ip+'  /  session: '+`${sessionID}`+'  /  '+date);
+        resJson.msg = '세션에 적절하지 않은 문자가 포함되어 있습니다. 서버에 ip가 저장됩니다.';
     }
-})
-*/
+    res.send(resJson);
+});
+
+app.post('/faqWrite', async(req, res) => {
+    let sessionID = req.body.sessionID;
+    let option = req.body.variable1;
+    let title = req.body.variable2;
+    let main = req.body.variable3;
+    
+    let date = new Date();
+    let ip = requestIp.getClientIp(req);
+    
+    let resJson = {
+        ok: false,
+        msg: '',
+        result: null,
+    };
+    let conn = null;
+    
+    if(nInjectionCheck(sessionID)){
+        try{
+            const query1 = 'SELECT * FROM sessions_table WHERE user_session = ?';
+            
+            conn = await mysql.getConnection();
+            
+            const [ result ] = await conn.query(query1, sessionID);
+            
+            if(result.length <= 0){
+                conn.release();
+                resJson.msg = '만료된 세션입니다. 다시 로그인 해 주십시오.';
+                res.send(resJson);
+                return;
+            }
+            
+            const query2 = 'INSERT INTO faqs_table(faq_process, faq_option, faq_from_whom, faq_title, faq_main, faq_created_at, faq_updated_at) VALUES("요청완료", ?, ?, ?, ?, now(), now())';
+            
+            const [ result2 ] = await conn.query(query2, [option, result[0].user_session_address, title, main]);
+            
+            const query3 = 'INSERT INTO answers_table(answer_option, answer_to_whom, answer_title, answer_main, answer_created_at, answer_updated_at) VALUES(?, ?, ?, ?, now(), now())';
+            
+            const [ result3 ] = await conn.query(query3, [option, result[0].user_session_address, null, null]);
+            
+            resJson.ok = true;
+            resJson.msg = '문의사항 작성에 성공하셨습니다.';
+            
+            conn.release();
+        }
+        catch(error){
+            let stamp = date.getTime();
+
+            console.log('_FAQ_WRITE_Error  /  ip: ' + ip + '  /  ' + stamp);
+            console.log(error);
+
+            resJson.msg =
+                '데이터를 확인하던 중 오류가 발생하였습니다. _FAQ_WRITE_Error: ' + `${stamp}`;
+            resJson.result = [error.message];
+
+            conn.release();
+        }
+    }
+    else {
+        console.log('_SESSION_INJECTION  /  ip: '+ip+'  /  session: '+`${sessionID}`+'  /  '+date);
+        resJson.msg = '세션에 적절하지 않은 문자가 포함되어 있습니다. 서버에 ip가 저장됩니다.';
+    }
+    res.send(resJson);
+});
+
 app.listen(process.env.PORT, '0.0.0.0', () => {
     console.log(`${process.env.PORT}번 포트에서 대기중`);
 });
