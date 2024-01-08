@@ -544,9 +544,23 @@ app.post('/faqWrite', async(req, res) => {
                 return;
             }
             
+            if(title.length <= 0){
+                conn.release();
+                resJson.msg = '제목을 작성하여 주십시오.';
+                res.send(resJson);
+                return;
+            }
+            
             if(title.length > 100){
                 conn.release();
                 resJson.msg = '제목은 100자 이내로 작성하셔야 합니다.';
+                res.send(resJson);
+                return;
+            }
+            
+            if(main.length <= 0){
+                conn.release();
+                resJson.msg = '본문을 작성하여 주십시오.';
                 res.send(resJson);
                 return;
             }
