@@ -420,7 +420,8 @@ app.post('/faqList', async(req, res) => {
             
             resJson.ok = true;
             resJson.msg = '문의사항 로딩에 성공하셨습니다.';
-            resJson.result = result3;
+            console.log(result3);
+            resJson.result = [faqNum, result3];
             
             conn.release();
         }
