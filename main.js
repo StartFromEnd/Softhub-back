@@ -620,7 +620,7 @@ function hashing(salt, pw) {
 const regexE = /[^a-zA-Z0-9!\?@\.]/;
 const regexP = /[^a-zA-Z0-9!\?@]/;
 const regexN = /[^a-zA-Z0-9가-힣]/;
-const regexT = /[^a-zA-Z0-9ㄱ-ㅎㅏ-ㅣ가-힣!\?@\.,]/;
+const regexT = /[^a-zA-Z0-9ㄱ-ㅎㅏ-ㅣ가-힣!\?@\.,\s]/;
 
 function epInjectionCheck(e, p) {
     if (e.match(regexE) || p.match(regexP)) {
