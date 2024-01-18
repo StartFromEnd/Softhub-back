@@ -613,28 +613,18 @@ app.post('/faqRead', async (req, res) => {
             resJson.msg = '요청에 적절하지 않은 문자가 포함되어 있습니다. 서버에 ip가 저장됩니다.';
         }
         res.send(resJson);
-    }
-    else{
+    } else {
         if (nInjectionCheck(option) && nInjectionCheck(seq)) {
             try {
-                
                 conn = await mysql.getConnection();
 
-                const query1 =
-                    'SELECT * FROM faqs_table WHERE seq=? AND faq_option=?';
+                const query1 = 'SELECT * FROM faqs_table WHERE seq=? AND faq_option=?';
 
-                const [result] = await conn.query(query1, [
-                    seq,
-                    option,
-                ]);
+                const [result] = await conn.query(query1, [seq, option]);
 
-                const query2 =
-                    'SELECT * FROM answers_table WHERE seq=? AND answer_option=?';
+                const query2 = 'SELECT * FROM answers_table WHERE seq=? AND answer_option=?';
 
-                const [result2] = await conn.query(query2, [
-                    seq,
-                    option,
-                ]);
+                const [result2] = await conn.query(query2, [seq, option]);
 
                 if (result.length <= 0 || result2.length <= 0) {
                     resJson.msg = '존재하지 않는 문의사항 입니다.';
@@ -788,16 +778,11 @@ app.post('/faqWrite', async (req, res) => {
             resJson.msg = '영문, 한글, 숫자, !, ?, @, 온점, 쉼표만 작성하실 수 있습니다.';
         }
         res.send(resJson);
-    }
-    else{
-        if (
-            nInjectionCheck(option) &&
-            tInjectionCheck(title) &&
-            tInjectionCheck(main)
-        ) {
+    } else {
+        if (nInjectionCheck(option) && tInjectionCheck(title) && tInjectionCheck(main)) {
             try {
                 conn = await mysql.getConnection();
-                
+
                 if (title.length <= 0) {
                     conn.release();
                     resJson.msg = '제목을 작성하여 주십시오.';
@@ -829,22 +814,12 @@ app.post('/faqWrite', async (req, res) => {
                 const query1 =
                     'INSERT INTO faqs_table(faq_process, faq_option, faq_from_whom, faq_title, faq_main, faq_created_at, faq_updated_at) VALUES("요청완료", ?, ?, ?, ?, now(), now())';
 
-                const [result] = await conn.query(query1, [
-                    option,
-                    ip,
-                    title,
-                    main,
-                ]);
+                const [result] = await conn.query(query1, [option, ip, title, main]);
 
                 const query2 =
                     'INSERT INTO answers_table(answer_option, answer_to_whom, answer_title, answer_main, answer_created_at, answer_updated_at) VALUES(?, ?, ?, ?, now(), now())';
 
-                const [result2] = await conn.query(query2, [
-                    option,
-                    ip,
-                    null,
-                    null,
-                ]);
+                const [result2] = await conn.query(query2, [option, ip, null, null]);
 
                 resJson.ok = true;
                 resJson.msg = '문의사항 작성에 성공하셨습니다.';
@@ -863,18 +838,162 @@ app.post('/faqWrite', async (req, res) => {
                 conn.release();
             }
         } else {
-            console.log(
-                '_INJECTION  /  ip: ' +
-                    ip +
-                    '  /  option: ' +
-                    option +
-                    '  /  ' +
-                    date
-            );
+            console.log('_INJECTION  /  ip: ' + ip + '  /  option: ' + option + '  /  ' + date);
             resJson.msg = '영문, 한글, 숫자, !, ?, @, 온점, 쉼표만 작성하실 수 있습니다.';
         }
         res.send(resJson);
     }
+});
+
+app.post('/supportWrite', async (req, res) => {
+    let sessionID = req.body.sessionID;
+    let infos = req.body.variable1;
+    let images = req.body.variable2;
+    let main = req.body.variable3;
+
+    let date = new Date();
+    let ip = requestIp.getClientIp(req);
+
+    let resJson = {
+        ok: false,
+        msg: '',
+        result: null,
+    };
+    let conn = null;
+
+    let injection = () => {
+        if (!nInjectionCheck(sessionID)) {
+            return false;
+        }
+        for (let i = 0; i <= 3; i++) {
+            if (!tInjectionCheck(infos[i])) {
+                return false;
+            }
+        }
+        for (let i = 0; i <= 5; i++) {
+            if (!nInjectionCheck(images[i])) {
+                return false;
+            }
+        }
+        if (!tInjectionCheck(main)) {
+            return false;
+        }
+        return true;
+    };
+
+    if (injection) {
+        try {
+            const query1 = 'SELECT * FROM sessions_table WHERE user_session = ?';
+
+            conn = await mysql.getConnection();
+
+            const [result] = await conn.query(query1, sessionID);
+            
+            if(result.length <= 0){
+                conn.release();
+                resJson.msg = '만료된 세션입니다. 다시 로그인 해 주십시오.';
+                res.send(resJson);
+                return;
+            }
+            if(infos[0].length <= 0){
+                conn.release();
+                resJson.msg = '제목을 작성하여 주십시오.';
+                res.send(resJson);
+                return;
+            }
+            if(infos[0].length > 100){
+                conn.release();
+                resJson.msg = '제목은 100자 이내로 작성하셔야 합니다.';
+                res.send(resJson);
+                return;
+            }
+            if(infos[1].length <= 0){
+                conn.release();
+                resJson.msg = '제품명을 작성하여 주십시오.';
+                res.send(resJson);
+                return;
+            }
+            if(infos[1].length > 50){
+                conn.release();
+                resJson.msg = '제품명은 50자 이내로 작성하셔야 합니다.';
+                res.send(resJson);
+                return;
+            }
+            if(infos[2].length <= 0){
+                conn.release();
+                resJson.msg = '가격을 작성하여 주십시오.';
+                res.send(resJson);
+                return;
+            }
+            if(infos[2].length > 16){
+                conn.release();
+                resJson.msg = '가격은 9999조원을 초과할 수 없습니다.';
+                res.send(resJson);
+                return;
+            }
+            if(infos[2] < 0){
+                conn.release();
+                resJson.msg = '가격은 음수일 수 없습니다.';
+                res.send(resJson);
+                return;
+            }
+            if(infos[3].length <= 0){
+                conn.release();
+                resJson.msg = '목표를 작성하여 주십시오.';
+                res.send(resJson);
+                return;
+            }
+            if(infos[3].length > 16){
+                conn.release();
+                resJson.msg = '목표는 9999조개를 초과할 수 없습니다.';
+                res.send(resJson);
+                return;
+            }
+            if(infos[3] <=0){
+                conn.release();
+                resJson.msg= '목표 인원수는 최소 1명이어야 합니다.';
+                res.send(resJson);
+                return;
+            }
+            if(main.length <= 0){
+                conn.release();
+                resJson.msg = '본문을 작성하여 주십시오.';
+                res.send(resJson);
+                return;
+            }
+            if(main.length >= 5000){
+                conn.release();
+                resJson.msg = '본문의 길이가 너무 깁니다.';
+                res.send(resJson);
+                return;
+            }
+            
+            const query2 = 'INSERT INTO supports_table(support_writer, support_title, support_product, support_price, support_goal, support_images, support_main) VALUES(?, ?, ?, ?, ?, ?, ?)';
+            
+            const [ result2 ] = await conn.query(query2, [result[0].user_session_address, infos[0], infos[1], infos[2], infos[3], images, main]);
+            
+            resJson.ok = true;
+            resJson.msg = '후원 요청에 성공하셨습니다.';
+            
+            conn.release();
+            
+        } catch (error) {
+            let stamp = date.getTime();
+
+            console.log('_SUPPORT_WRITE_Error  /  ip: ' + ip + '  /  ' + stamp);
+            console.log(error);
+
+            resJson.msg =
+                '데이터를 확인하던 중 오류가 발생하였습니다. _SUPPORT_WRITE_Error: ' + `${stamp}`;
+            resJson.result = [error.message];
+
+            conn.release();
+        }
+    } else {
+        console.log('_INJECTION  /  ip: ' + ip + '  /  option: ' + option + '  /  ' + date);
+        resJson.msg = '영문, 한글, 숫자, !, ?, @, 온점, 쉼표만 작성하실 수 있습니다.';
+    }
+    res.send(resJson);
 });
 
 app.listen(process.env.PORT, '0.0.0.0', () => {
