@@ -845,6 +845,90 @@ app.post('/faqWrite', async (req, res) => {
     }
 });
 
+app.post('/supportRead', async (req, res) => {
+    let sessionID = req.body.sessionID;
+    let option = req.body.variable1;
+    let nowPage = req.body.variable2;
+
+    let date = new Date();
+    let ip = requestIp.getClientIp(req);
+
+    let resJson = {
+        ok: false,
+        msg: '',
+        result: null,
+    };
+    let conn = null;
+
+    if (nInjectionCheck(sessionID)) {
+        try {
+            const query1 = 'SELECT * FROM sessions_table WHERE user_session = ?';
+
+            conn = await mysql.getConnection();
+
+            const [result] = await conn.query(query1, sessionID);
+
+            if (result.length <= 0) {
+                conn.release();
+                resJson.msg = '만료된 세션입니다. 다시 로그인 해 주십시오.';
+                res.send(resJson);
+                return;
+            }
+            
+            let query2, who;
+            
+            if(option == 'request'){
+                query2 = 'SELECT COUNT(*) as cnt FROM supports_table WHERE support_writer=?';
+                who = result[0].user_session_address;
+            }
+            else{
+                query2 = 'SELECT COUNT(*) as FROM supports_table WHERE support_supporters Like ?';
+                who = '%'+result[0].user_session_address+'/'+'%';
+            }
+            
+            const [result2] = await conn.query(query2, [who]);
+            
+            let supportNum = result2[0].cnt;
+            let startSupportNum = 20 * (nowPage - 1);
+            let limitSupportNum = supportNum >= startSupportNum + 20 ? 20 : supportNum - startSupportNum;
+            
+            let query3;
+            
+            if(option == 'request'){
+                query3 = 'SELECT * FROM supports_table WHERE support_writer=? ORDER BY seq DESC Limit ?, ?';
+            }
+            else{
+                query3 = 'SELECT * FROM supports_table WHERE support_supporters LIKE ? ORDER BY seq DESC Limit ?, ?';
+            }
+            
+            const [result3] = await conn.query(query3, [who, startSupportNum, limitSupportNum]);
+            
+            resJson.ok = true;
+            resJson.msg = '후원목록 로딩에 성공하셨습니다.';
+            resJson.result = [supportNum, result3];
+            
+            conn.release();
+        } catch (error) {
+            let stamp = date.getTime();
+
+            console.log('_SUPPORT_READ_Error  /  ip: ' + ip + '  /  ' + stamp);
+            console.log(error);
+
+            resJson.msg =
+                '데이터를 확인하던 중 오류가 발생하였습니다. _SUPPORT_READ_Error: ' + `${stamp}`;
+            resJson.result = [error.message];
+
+            conn.release();
+        }
+    } else {
+        console.log(
+            '_SESSION_INJECTION  /  ip: ' + ip + '  /  session: ' + `${sessionID}` + '  /  ' + date
+        );
+        resJson.msg = '세션에 적절하지 않은 문자가 포함되어 있습니다. 서버에 ip가 저장됩니다.';
+    }
+    res.send(resJson);
+});
+
 app.post('/supportWrite', async (req, res) => {
     let sessionID = req.body.sessionID;
     let infos = req.body.variable1;
@@ -888,95 +972,103 @@ app.post('/supportWrite', async (req, res) => {
             conn = await mysql.getConnection();
 
             const [result] = await conn.query(query1, sessionID);
-            
-            if(result.length <= 0){
+
+            if (result.length <= 0) {
                 conn.release();
                 resJson.msg = '만료된 세션입니다. 다시 로그인 해 주십시오.';
                 res.send(resJson);
                 return;
             }
-            if(infos[0].length <= 0){
+            if (infos[0].length <= 0) {
                 conn.release();
                 resJson.msg = '제목을 작성하여 주십시오.';
                 res.send(resJson);
                 return;
             }
-            if(infos[0].length > 100){
+            if (infos[0].length > 100) {
                 conn.release();
                 resJson.msg = '제목은 100자 이내로 작성하셔야 합니다.';
                 res.send(resJson);
                 return;
             }
-            if(infos[1].length <= 0){
+            if (infos[1].length <= 0) {
                 conn.release();
                 resJson.msg = '제품명을 작성하여 주십시오.';
                 res.send(resJson);
                 return;
             }
-            if(infos[1].length > 50){
+            if (infos[1].length > 50) {
                 conn.release();
                 resJson.msg = '제품명은 50자 이내로 작성하셔야 합니다.';
                 res.send(resJson);
                 return;
             }
-            if(infos[2].length <= 0){
+            if (infos[2].length <= 0) {
                 conn.release();
                 resJson.msg = '가격을 작성하여 주십시오.';
                 res.send(resJson);
                 return;
             }
-            if(infos[2].length > 16){
+            if (infos[2].length > 16) {
                 conn.release();
                 resJson.msg = '가격은 9999조원을 초과할 수 없습니다.';
                 res.send(resJson);
                 return;
             }
-            if(infos[2] < 0){
+            if (infos[2] < 0) {
                 conn.release();
                 resJson.msg = '가격은 음수일 수 없습니다.';
                 res.send(resJson);
                 return;
             }
-            if(infos[3].length <= 0){
+            if (infos[3].length <= 0) {
                 conn.release();
                 resJson.msg = '목표를 작성하여 주십시오.';
                 res.send(resJson);
                 return;
             }
-            if(infos[3].length > 16){
+            if (infos[3].length > 16) {
                 conn.release();
                 resJson.msg = '목표는 9999조개를 초과할 수 없습니다.';
                 res.send(resJson);
                 return;
             }
-            if(infos[3] <=0){
+            if (infos[3] <= 0) {
                 conn.release();
-                resJson.msg= '목표 인원수는 최소 1명이어야 합니다.';
+                resJson.msg = '목표 인원수는 최소 1명이어야 합니다.';
                 res.send(resJson);
                 return;
             }
-            if(main.length <= 0){
+            if (main.length <= 0) {
                 conn.release();
                 resJson.msg = '본문을 작성하여 주십시오.';
                 res.send(resJson);
                 return;
             }
-            if(main.length >= 5000){
+            if (main.length >= 5000) {
                 conn.release();
                 resJson.msg = '본문의 길이가 너무 깁니다.';
                 res.send(resJson);
                 return;
             }
-            
-            const query2 = 'INSERT INTO supports_table(support_writer, support_title, support_product, support_price, support_goal, support_images, support_main) VALUES(?, ?, ?, ?, ?, ?, ?)';
-            
-            const [ result2 ] = await conn.query(query2, [result[0].user_session_address, infos[0], infos[1], infos[2], infos[3], images, main]);
-            
+
+            const query2 =
+                'INSERT INTO supports_table(support_writer, support_title, support_product, support_price, support_goal, support_images, support_main) VALUES(?, ?, ?, ?, ?, ?, ?)';
+
+            const [result2] = await conn.query(query2, [
+                result[0].user_session_address,
+                infos[0],
+                infos[1],
+                infos[2],
+                infos[3],
+                images,
+                main,
+            ]);
+
             resJson.ok = true;
             resJson.msg = '후원 요청에 성공하셨습니다.';
-            
+
             conn.release();
-            
         } catch (error) {
             let stamp = date.getTime();
 
