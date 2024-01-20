@@ -932,6 +932,7 @@ app.post('/supportRead', async (req, res) => {
 app.post('/supportWrite', async (req, res) => {
     let sessionID = req.body.sessionID;
     let infos = req.body.variable1;
+    console.log(infos);
     let images = req.body.variable2;
     let main = req.body.variable3;
 
