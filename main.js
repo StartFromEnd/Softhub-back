@@ -19,6 +19,10 @@ const nodeMailer = require('nodemailer');
 
 const mysql = require('./mysql');
 
+const fs = require('fs');
+
+const {Storage} = require('@google-cloud/storage');
+
 const corsOptions = {
     origin: [
         'https://softhub-picwm.run.goorm.site/',
@@ -932,8 +936,9 @@ app.post('/supportRead', async (req, res) => {
 app.post('/supportWrite', async (req, res) => {
     let sessionID = req.body.sessionID;
     let infos = req.body.variable1;
-    console.log(infos);
+    console.log(infos[0]);
     let images = req.body.variable2;
+    console.log(images[0]);
     let main = req.body.variable3;
 
     let date = new Date();
@@ -1052,7 +1057,116 @@ app.post('/supportWrite', async (req, res) => {
                 res.send(resJson);
                 return;
             }
-
+            let imageAddress = [];
+            for(let i=0; i<images.length; i++){
+                let firstSplit = images[i].split(',');
+                let secondSplit = firstSplit[0].split('/');
+                let lastSplit = secondSplit[1].split(';');
+                
+                const fileData = {
+                    data: firstSplit[1],
+                    extender: `.${lastSplit[0]}`
+                };
+                
+                if(images[0] == (
+                `iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAYAAAD0eNT6AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAOxAAADsQBl
+                SsOGwAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAABS+SURBVHic7d15zGZVfQfw74wwgDJsgoA
+                ICqIoiIIooLghuGKVaCM0rZKIMTVqjW1SrdVoW1P3paRVG6uNW9UuSi1L64KAiEUWqRuLLCIiIiDbsM3aP85MBGTmP
+                fd5733ufe7z+SQnIZnznPu7hzzv/T3nniUBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+                AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+                AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+                AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+                AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+                AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACgQ0v6DgDm1K5JDk+ye9+B9
+                OzqJKcl+VXfgQBA196e5I4k65SsS3J7kr9cVI8CwMD9Vfp/4A61vGMR/QoAg/XwJHel/wftUMudSfaYuHeBRpb2HQD
+                MkeOTbNF3EAO2ZZJX9R0EALTtJ+n/V/bQy8UT9y4ADNCB6f/hOivlgAn7GGhgs74DgAa2S7JDh+1flzIjvQvHdNTuG
+                B2T5MK+gwCgf4ckOTPJmnT7y3NlkhOT7N1y/EuSXNFx7GMql8ceJQBz74VJ7s50H0C/SbJ/i/dwyJTjH0M5eKKeBqp
+                5BcCQbZPk00mWTfm62yf5TJKDkqxtob3a4f/bk/x9C9cbstcneVBFvWOTfK/jWAAYqOPS76/QQ1u4h6VJflF5vS+2c
+                L2h+2Lq+uLqWKYMnfIFY8j2G8H1n5Zkt8q6X2rhekNXe48PS3JYl4HAvJMAMGRb9nz9B7bQxrGV9W5NcmoL1xu6U5L
+                cUlnXygnokAQAuvOAJC+trHtiyjbBY3d3kq9W1n15zFOCzkgAoDtHJNm5su48DP9vUHuvOyV5VodxwFyTAEB3aoewb
+                0ryjS4DGZivJbmxsq7XANARw2uMwQ0p79Br7ZiyxLBLy5IcXVn3P1I2IZoXq5J8JcmrK+q+NMnrMl/9AzD3TkjdkrE
+                3DKTde3pR5TXWpbwqmDdHpr5/juopRhg1rwCgG7VD19cnOaPLQAbqWylnL9TwGgA6IAGA9m2Z5MWVdf81yeoOYxmqN
+                SmvPmocnWSrDmOBuSQBgPYdlfo5BvM0+/++au99eZIXdBkIzCOTAOnalkmem2SfNE84D6qsd2SabdrTVbsbvKSy3jV
+                JvjNB+2NxVkof1OyUeEySL7dwzWUpcy4em2TzFtrrwtokl6SslpiHvSGAETo8ZU/3vk+WG2r58ORdOxofTl1f3Z5k6
+                0Ve65CUo4b7/v9eW34e+yAAM+hJSe5M/39Eh1zaOGxo1h2a+v76g0VcZ88kNze41lDKHUmeuIj7Bpi6M9P/H88hlyu
+                TLJm4d8djSUpf1PTZiYu4zicqrzHEcvoi7htgqnZKeY/Z9x/OIZf3Tty74/Pe1PXZrSnnK0yi9kjmIZa1SR484X3DR
+                lkFQBd2i1+3C5nn2f/31WQ1wA4TXqP2TIYhWpJyPDK0SgJAFyb9lTYvLk1yQd9BDMgFKX2ykJVptuXzPdVuOjRUVmz
+                ROgkATN9H+w5ggD5ZUefUlOOEJ3HqhJ8DoIGD0v9706GWC5NsMXnXjtbylFGAjfXbjUn2XkT7s7oKYEOp3bsCqhkBg
+                Ok5NWUTmkl/xY7ZbSkbRp13P/92bpJnJLlsEe1fmeR5Sa5YRBswKt4r0adrk3ym7yA6tjbJVUm+l+T7PccydD9L2az
+                nGUmekHJGwnlJzmmp/XNSdgB8dpJ9kzykpXYX47gku/QdBEBbal8BtPWHHWbVefEKgJ54BQAAc8grAJgvW6UccLRty
+                vd/Xco++ysy+RI7YAZJAGCc9k5yYMq79McleXjKZjI7LvC5m1Imyl2S5KKUmfnnpMxjAEZEAgDj8OAkR6UcYXxkkl0
+                nbGf7lPfN933nfEWS05J8K8n/pCzLA4B7MQlwOrZO8sokp6TskjetNel3pxzM89LY02CxTAIERkUC0K09k3wgZbi+7
+                w1qblwfy0M7vePxkgAAoyIB6MbeST6XZE36f/Dft9yVssXxI7q6+ZGSAACjIgFo10OS/GOmO8w/aVmZ5ISUVQYsTAJ
+                Ab+wDAMO1JOUd/4+TvCbJ5v2GU2XzJG9IcnFK7I6FhoGSAMAwPSLJmUk+nYWX7g3RLimxfz3OsodBkgDA8Px+kguSP
+                K3vQFpwRMoZCC/sOxDg3iQAMBybJ/lYkn9LWY/fletT1vVfmuT89f99Y8rhO13YMclJSd4Te4/AYPgywjBsn/LgP6L
+                FNq9NclbKZMsfpbyXvyYbf9BvlmSPJHslOSDJwSmjEJNuKnRPS5K8OWVXwpcnuaOFNgEYGKsAmtktyU/Sziz8C5K8N
+                eW42zYsSUkG3pqSRLQR49lJdmgpvllnFQAwKhKAenskuSyLe6DenvLq4IlTiPdJST6Rsu5/MTH/OCYHJhIAYGQkAHV
+                2T/KzTP4QXZHkvSn7BEzbLknelzKUP2n8P0k5w2CeSQCAUZEALGy7TD6kvjbJZ1NeHfRtj5TdCddmsnv5bsrxxPNKA
+                gCMigRg07ZIcnome2BemeRZ0w64wnMz+WjGyZmNTY66IAEARkUCsGkfz2QPys8k2aaHeGstT/LFTHZv7+8h3iGQAAC
+                jIgHYuFek+cNxZcr2urPiDUlWpdk9rk3yoj6C7ZkEABgVCcD9e0zKjP0mD8YVKcPrs+aolNib3OsNKRMj54kEABgVC
+                cDvWpqy/r3JA/E3SZ7SR7AtOTTJLWl2z2dkvg4QkgAAoyIB+F1vSrMH4e3p9iyA5Skb/Dw5ZdOgNnb7uz9PSXJrmt3
+                7cR3FMkQSAGBUJAD39tA0Gw6/O8mRHcXy4JRT+u5vI59bk5yb5MNJfi/JVi1d83lpNifgunR7FsKQSACAUZEA3Nun0
+                uwX8Gs7iuNBSX7QII5bknwy7eww+CcNrrsuyT+0cM1ZIAEARkUC8Fv7pxy+U/vg+1SHsbyjQRz3LackOXCR1/9cg+u
+                tTrL3Iq83CyQAwKhIAH7ry6l/6F2W8iu9Kxc1iGVjD+UTUuYPTGKbJJc3uN4/TXidWSIBAEZFAlA8Osma1PXFmiSHd
+                RzPyspYFioXJ3n8hDE8M/XbBt+dstXwmEkA6M3SvgOAEfvT1H/H/jnJdzqMJSkrC9qwT5L/TfLiCT57RsqOhjWWJfn
+                zCa4BQE+MACTbpn7Tn1uS7DyFmE6qjKe2rEryygni2Dn1qyJuzbgPCzICQG+MAEA3Xp76B9eHUpa+de39KcPvbdksZ
+                dLiSxp+7rqUuQQ1lic5umH7APTECEByVup//U9zzfsk+/QvVO5I8xUCOyS5rbL9Uye50RlhBAAYlXlPAB6e+oluH+w
+                hvv1SRgNOTnJhkmsbxLux8tM0P6nwo5Vtr053OxX2TQIAjMq8JwCvTd39r02ZUDcEWyR5fspRxTdksiTg4w2vuW+Dt
+                o+f+M6GTQIAjMq8JwBfTd39n9lXgAvYNsnfpvnJhWuSHNLwWudWtv35xdzQgEkA6I1JgNCuzZM8u7Luv3cZyCLckuS
+                tSZ6QsnlQraVJ3t3wWl+orHd45uuUQICZNM8jAAemfvh/Fja52S7JaWk2EvDUBu0/skG7+y76bobHCAC9MQIA7XpyZ
+                b1Lkvy8y0BacnPKMr8fN/jM6xvUvTzJlZV1D23QLrAACQC0qzYBOKvTKNp1W8pa/Nsq6x+dZisCTqus95gGbQILkAB
+                Aux5VWe+7nUbRvsuSfKCy7lZJXtig7Qsq6w1lxQSMggQA2rVnZb0mQ+pD8aEkv6qse0SDdi+srCcBgBZJAKA9y5LsV
+                lm3yez6oViR5F8q6z69QbuXVtbbK/5mQWt8maA9OyZ5QEW9m1IOuZlFJ1bWe2TKksgaN6RsJ7yQzZNsXdkmsAAJALR
+                n28p613caRbfOTt2xwpul/nVIUrYjrtF0u2FgIyQA0J7aBOA3nUbRrTVJrqmsu2ODdldU1pMAQEskANCeLSrrreo0i
+                u7VJgBNHtY1rwCScjww0AIJALRnTWW91Z1G0b3a4fra/miiZo4FUEECAO2pfbBv1WkU3bu4os66ynob1I4W1I4UAAu
+                QAEB77qqsVztXYKg+n2TlAnW+meTqBm3WDu3f2aBNYBMkANCe2tn9TSbHDdEVSd6Y8iv//vwyyWsatlmbFM3q8kkYH
+                AkAtOe6bPyheE87ZfbXs388yZEpv/Q3jAZcn+RjKSci1h7wk5T+qEkAViX5dYN2gU3YrO8AYERWJ7kxdb/w90ryg27
+                D6dxp68vSJA9M/VK++6rd4veX6WZiIcwlIwDQrksq6z2+0yima20mf/gn9QnALByfDDNDAgDtqt3j/+BOo5gttX3xw
+                06jgDkjAYB21Z7yd1inUcyWwyvr/V+nUcCckQBAu86prHdgkl26DGRG7JHkUZV1a48NBipIAKBd56dus5olSV7QcSy
+                zoLYPVkQCAK2SAEC7Vib5XmXdY7sMZEb8UWW9M7Pw5kNAAxIAaN8plfWOTLJ7l4EM3CNSPxfiGx3GAXNJAgDtO7Gy3
+                tIkr+oykIF7dcqrkBr/1WUgALTjoJQd8RYqtRPmZtEPU9cHv87sHw40iW2S3JS6Pqp9pTKLzktdHxzUV4CMlxEA6MZ
+                nK+vtlOT4LgMZqNcl2a6y7he6DASA9hgBSHZOmbRW0w/Xpf40vDHYLmXko6Zv7krpy7EyAkBvjABAN65L8p+VdR+S5
+                C0dxjI070oZ+ajxpZS+BGAGGAEoDkldP6xLcneSx/UT5lQ9MeXQpNp+eVI/YU6NEQB6YwQAunNOynG5NZYl+WSSB3Q
+                XTu+2TLN7/FrKAxLogAQAuvWuBnUPTvI3XQUyAB9KckBl3XVJ3tZhLAB0wCuAezsp9UPea5O8qJ8wO3VM6vtgXZKv9
+                BPm1HkFAIyKBODeHpkym7324XdrymFBY3FIyl7+tfd/V5J9eol0+iQA9MYrAOje5UlOaFB/eZKTk+zZTThTtW/K1sg
+                PavCZdye5pJtwAOiSEYDftVWSi9JsGPyqJHv3EWxLHpvk6jS754tTJgvOCyMA9MYIAEzHnUmOS1kCV2uPJKcn2b+Lg
+                Dr2lCTfTvKwBp9ZmeQPU14BADCDjABs3NvT7BfxhjkBR/UR7IReluT2NL/PP+sj2J4ZAQBGRQKwcUtTdghs+nBcneS
+                vk2w2/ZCrLUvyd2l+b+tSTlCsPRlwTCQAwKhIADZtmzSfD7ChfCfJo6cf8oL2T3JuJrunC5NsPf2QB0ECAIyKBGBhe
+                ya5JpM9MO9K8s4M4xjh5Uk+mGRVJruXX6bMdZhXEgBgVCQAdfZLcmMme3CuS/KLJH+cZPNpB57kgUnemPIAnzT+X6c
+                sE5xnEgBgVCQA9Z6cxSUB61KW2v1Fkh2nEO+u66913SJjviHJ46cQ79BJAIBRkQA087hM/jrgnuWulMl0x6bMM2jLD
+                inL805Ns5P8NpWwzMPJhzUkAMCoSACa2zNlE5zFPlw3lFUpEwbflbIsb6/U7fuxLOXVxMuSvC/lAbWmxbh+lGT3hn0
+                zZhIAejPkJUUwT65M2TP/c2nnMKDNkjx1fdlgVZJrU97br0hyR0pSsDxlFv5OSXZLd0cSn5TkFUlu7qh9AHpmBGByS
+                1Nm+Lcx1D6UsirJWzKf6/wXYgSA3tgKGIZlbUoC8IwkP+03lFZckuSZSd6T8iADBkICAMN0dpIDknwkzc4PGIrVKXM
+                IDki5F2BgJAAwXHckeVPKjPlTeo6liW+kDFm/OQ72gcGSAMDwXZJyGNALUmb2D9XZSY5M8pwkP+g5FmABEgCYHf+d5
+                GlJDk9ycsryvL6tTfLVJE9PcliSb/YbDlDLMkCYPaevL7snOT7JK1P2EZimS5N8dn25asrXBmCgLAOcvgNSVg+cm8k
+                P5tlUWZ0yxP+2WJLWJssA6Y0RABiHC9eXd6Zs6vPUJIem7Or3mCT7JNmisq3bklyRsgzxvJSk4vwkt7QaMdArCQCMz
+                4okX1tf7mnHlN3+dkrZ8jdJtk9y6/pyS5Lr1xdg5CQAMD9uWF8u6jsQoH9WAQDAHJIAAMAckgAAwBySAADAHJIAAMA
+                ckgAAwBySAADAHJIAAMAckgAAwByyEyB92jXJm/sOAnq0S98BML8kAPRp9yTv6TsIgHnkFQAAzCEJAADMIQkAAMwhC
+                QBdWNN3ADAyq/sOgPGRANCFXyRZ13cQMBLrUr5T0CoJAF24Icm3+w4CRuKMJDf2HQTjs6TvABitg5KclWTLvgOBGXZ
+                nksOSfL/vQBgfIwB05fwkz0/y874DgRl1Vcp3yMOfThgBoGtbJnlOkv2SbNdzLDALbk7yoyRfT3J3z7EAAAAAAAAAA
+                AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+                AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+                AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+                AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+                AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+                AAAAAAAAAAAAAAAAAAAAAAAAAk/l/3fIEQ1IedkUAAAAASUVORK5CYII=`
+                )){
+                    fileData.data = null;
+                }
+                
+                const [result] = await UploadImage(fileData);
+                
+                if(result[0] == false){
+                    conn.release();
+                    resJson.msg = '사진을 저장하던 중 오류가 발생하였습니다.';
+                    res.send(resJson);
+                    return;
+                }
+                else{
+                    imageAddress.add(result[1]);
+                }
+            }
+            
             const query2 =
                 'INSERT INTO supports_table(support_writer, support_title, support_product, support_price, support_goal, support_images, support_main) VALUES(?, ?, ?, ?, ?, ?, ?)';
 
@@ -1062,7 +1176,7 @@ app.post('/supportWrite', async (req, res) => {
                 infos[1],
                 infos[2],
                 infos[3],
-                images,
+                imageAddress,
                 main,
             ]);
 
@@ -1267,5 +1381,36 @@ async function makeSession(conn, req, res, resJson) {
         resJson.result = [error.message];
         res.send(resJson);
         return;
+    }
+}
+
+async function UploadImage(fileData){
+    let date = new Date();
+    const storage = new Storage({
+        projectId: process.env.PROJECT_ID,
+        credentials: {
+          client_email: process.env.CLIENT_EMAIL,
+          private_key: process.env.PRIVATE_KEY,
+        },
+    });
+    
+    if(fileData.data == null){
+        return null;
+    }
+    else{
+        let imageName = `/${date.time()}`+`${fileData.extender}`;
+        let fileName = '/workspace/CrowdFundBack/imageFolder'+imageName;
+        await fs.writeFileSync(fileName, fileData.data, 'base64');
+        
+        storage.bucket(process.env.BUCKET_NAME).upload(fileName, {
+            destination: imageName,
+        }, (error, msg) => {
+            if(error){
+                return [false, error.message];
+            }
+            else{
+                return [true, msg];
+            }
+        })
     }
 }

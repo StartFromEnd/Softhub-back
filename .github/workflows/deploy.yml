@@ -45,6 +45,14 @@ jobs:
                   secret: auth_email_pw
                 - name: SESSION_KEY
                   secret: session_key
+                - name: BUCKET_NAME
+                  secret: bucket_name
+                - name: PROJECT_ID
+                  secret: project_id
+                - name: CLIENT_EMAIL
+                  secret: client_email
+                - name: PRIVATE_KEY
+                  secret: private_key
             context:
               git:
                 url: git@github.com:${{ github.repository }}.git
