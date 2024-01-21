@@ -936,11 +936,14 @@ app.post('/supportRead', async (req, res) => {
 app.post('/supportWrite', async (req, res) => {
     let sessionID = req.body.sessionID;
     let infos = req.body.variable1;
-    console.log(infos[0]);
+    infos = infos.split('&%!,');
     let images = req.body.variable2;
-    console.log(images[0]);
+    images = images.split('&%!,');
     let main = req.body.variable3;
-
+    
+    console.log(infos[0]);
+    console.log(images[0]);
+    
     let date = new Date();
     let ip = requestIp.getClientIp(req);
 
