@@ -1200,7 +1200,7 @@ app.post('/supportWrite', async (req, res) => {
             conn.release();
         }
     } else {
-        console.log('_INJECTION  /  ip: ' + ip + '  /  option: ' + option + '  /  ' + date);
+        console.log('_INJECTION  /  ip: ' + ip +  '  /  ' + date);
         resJson.msg = '영문, 한글, 숫자, !, ?, @, 온점, 쉼표만 작성하실 수 있습니다.';
     }
     res.send(resJson);
@@ -1401,7 +1401,7 @@ async function UploadImage(fileData){
         return null;
     }
     else{
-        let imageName = `/${date.time()}`+`${fileData.extender}`;
+        let imageName = `/${date.getTime()}`+`${fileData.extender}`;
         let fileName = '/workspace/CrowdFundBack/imageFolder'+imageName;
         await fs.writeFileSync(fileName, fileData.data, 'base64');
         
