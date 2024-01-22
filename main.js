@@ -1072,6 +1072,8 @@ app.post('/supportWrite', async (req, res) => {
             let imageAddress = '';
             for(let i=0; i<6; i++){
                 let fileData;
+                console.log(images[i]);
+                console.log(images[i] !== 'null');
                 if(images[i] !== 'null'){
                     let firstSplit = images[i].split(',');
                     let secondSplit = firstSplit[0].split('/');
