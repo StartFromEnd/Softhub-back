@@ -849,7 +849,7 @@ app.post('/faqWrite', async (req, res) => {
     }
 });
 
-app.post('/supportRead', async (req, res) => {
+app.post('/supportList', async (req, res) => {
     let sessionID = req.body.sessionID;
     let option = req.body.variable1;
     let nowPage = req.body.variable2;
@@ -915,11 +915,11 @@ app.post('/supportRead', async (req, res) => {
         } catch (error) {
             let stamp = date.getTime();
 
-            console.log('_SUPPORT_READ_Error  /  ip: ' + ip + '  /  ' + stamp);
+            console.log('_SUPPORT_LIST_Error  /  ip: ' + ip + '  /  ' + stamp);
             console.log(error);
 
             resJson.msg =
-                '데이터를 확인하던 중 오류가 발생하였습니다. _SUPPORT_READ_Error: ' + `${stamp}`;
+                '데이터를 확인하던 중 오류가 발생하였습니다. _SUPPORT_LIST_Error: ' + `${stamp}`;
             resJson.result = [error.message];
 
             conn.release();
@@ -929,6 +929,62 @@ app.post('/supportRead', async (req, res) => {
             '_SESSION_INJECTION  /  ip: ' + ip + '  /  session: ' + `${sessionID}` + '  /  ' + date
         );
         resJson.msg = '세션에 적절하지 않은 문자가 포함되어 있습니다. 서버에 ip가 저장됩니다.';
+    }
+    res.send(resJson);
+});
+
+app.post('/supportRead', async(req, res) => {
+    let seq = req.body.variable1;
+    
+    let date = new Date();
+    let ip = requestIp.getClientIp(req);
+
+    let resJson = {
+        ok: false,
+        msg: '',
+        result: null,
+    };
+    let conn = null;
+    
+    if(nInjectionCheck(seq)){
+        try{
+            const query1 = 'SELECT * FROM supports_table WHERE seq = ?';
+            
+            conn = await mysql.getConnection();
+
+            const [result] = await conn.query(query1, seq);
+            
+            if(result.length <= 0){
+                conn.release();
+                resJson.msg = '존재하지 않는 후원글 입니다.';
+                res.send(resJson);
+                return;
+            }
+            
+            resJson.ok = true;
+            resJson.msg = '후원글 로딩에 성공하셨습니다.';
+            resJson.result = result;
+            
+            conn.release();
+        }
+        catch(error){
+            let stamp = date.getTime();
+
+            console.log('_SUPPORT_READ_Error  /  ip: ' + ip + '  /  ' + stamp);
+            console.log(error);
+
+            resJson.msg =
+                '데이터를 확인하던 중 오류가 발생하였습니다. _SUPPORT_READ_Error: ' + `${stamp}`;
+            resJson.result = [error.message];
+
+            conn.release();
+        }
+    }
+    else{
+        console.log(
+            '_SESSION_INJECTION  /  ip: ' + ip + '  /  ' + date
+        );
+        resJson.msg = '요청에 적절하지 않은 문자가 포함되어 있습니다. 서버에 ip가 저장됩니다.';
     }
     res.send(resJson);
 });
