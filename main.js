@@ -1396,7 +1396,6 @@ async function UploadImage(fileData){
           private_key: process.env.PRIVATE_KEY.replace(/\\n/g, "\n"),
         },
     });
-    console.log(process.env.PRIVATE_KEY.replace(/\\n/g, "\n"));
     
     if(fileData.data == null){
         return [null, 'null'];
@@ -1413,8 +1412,10 @@ async function UploadImage(fileData){
                 destination: imageName,
             });
         };
+        let result = [];
+        uploading().catch((error) => {result = [false, error.message];});
+        uploading().then(() => {result = [true, imageName];});
         
-        uploading().catch((error) => {return ['false', error.message];});
-        uploading().then(() => {return ['true', imageName];});
+        return result;
     }
 }
