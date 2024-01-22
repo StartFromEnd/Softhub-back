@@ -1166,7 +1166,7 @@ app.post('/supportWrite', async (req, res) => {
                     return;
                 }
                 else{
-                    imageAddress.add(msg);
+                    imageAddress[i] = msg;
                 }
             }
             
