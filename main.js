@@ -1416,6 +1416,6 @@ async function UploadImage(fileData){
             else{
                 return [true, msg];
             }
-        })
+        });
     }
 }
