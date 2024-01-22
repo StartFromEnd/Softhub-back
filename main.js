@@ -941,9 +941,6 @@ app.post('/supportWrite', async (req, res) => {
     images = images.split('&%!,');
     let main = req.body.variable3;
     
-    console.log(infos[0]);
-    console.log(images[0]);
-    
     let date = new Date();
     let ip = requestIp.getClientIp(req);
 
@@ -1073,7 +1070,7 @@ app.post('/supportWrite', async (req, res) => {
                 return;
             }
             let imageAddress = '';
-            for(let i=0; i<images.length; i++){
+            for(let i=0; i<6; i++){
                 let fileData;
                 if(images[i] !== 'null'){
                     let firstSplit = images[i].split(',');
