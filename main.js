@@ -1402,8 +1402,8 @@ async function UploadImage(fileData){
         return [null, 'null'];
     }
     else{
-        let imageName = `/${date.getTime()}`+`${fileData.extender}`;
-        let fileName = './imageFolder'+imageName;
+        let imageName = `${date.getTime()}`+`${fileData.extender}`;
+        let fileName = './imageFolder/'+imageName;
         !fs.existsSync('./imageFolder') && fs.mkdirSync('./imageFolder');
         
         await fs.writeFileSync(fileName, fileData.data, 'base64');
@@ -1412,7 +1412,7 @@ async function UploadImage(fileData){
             destination: imageName,
         });
         
-        uploading.catch((error) => {return ['false', error.message];});
-        uploading.then(() => {return ['true', imageName];});
+        uploading().catch((error) => {return ['false', error.message];});
+        uploading().then(() => {return ['true', imageName];});
     }
 }
