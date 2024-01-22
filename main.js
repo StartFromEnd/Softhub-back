@@ -1403,8 +1403,8 @@ async function UploadImage(fileData){
     else{
         let imageName = `/${date.getTime()}`+`${fileData.extender}`;
         let fileName = './imageFolder'+imageName;
-        if(!fs.existsSync(fileName)){
-            await fs.mkdirSync(fileName);
+        if(!fs.existsSync('./imageFolrder')){
+            await fs.mkdirSync('./imageFolrder');
         }
         await fs.writeFileSync(fileName, fileData.data, 'base64');
         
