@@ -1403,6 +1403,9 @@ async function UploadImage(fileData){
     else{
         let imageName = `/${date.getTime()}`+`${fileData.extender}`;
         let fileName = './imageFolder'+imageName;
+        if(!fs.existsSync(fileName)){
+            await fs.mkdirSync(fileName);
+        }
         await fs.writeFileSync(fileName, fileData.data, 'base64');
         
         storage.bucket(process.env.BUCKET_NAME).upload(fileName, {
