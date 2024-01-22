@@ -886,7 +886,7 @@ app.post('/supportRead', async (req, res) => {
                 who = result[0].user_session_address;
             }
             else{
-                query2 = 'SELECT COUNT(*) as FROM supports_table WHERE support_supporters Like ?';
+                query2 = 'SELECT COUNT(*) as cnt FROM supports_table WHERE support_supporters Like ?';
                 who = '%'+result[0].user_session_address+'/'+'%';
             }
             
