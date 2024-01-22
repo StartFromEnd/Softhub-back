@@ -1071,7 +1071,7 @@ app.post('/supportWrite', async (req, res) => {
                     extender: `.${lastSplit[0]}`
                 };
                 
-                if(images[i] == (
+                if(firstSplit[1] == (
                 `iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAYAAAD0eNT6AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAOxAAADsQBl
                 SsOGwAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAABS+SURBVHic7d15zGZVfQfw74wwgDJsgoA
                 ICqIoiIIooLghuGKVaCM0rZKIMTVqjW1SrdVoW1P3paRVG6uNW9UuSi1L64KAiEUWqRuLLCIiIiDbsM3aP85MBGTmP
