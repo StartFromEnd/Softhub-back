@@ -1396,6 +1396,7 @@ async function UploadImage(fileData){
           private_key: process.env.PRIVATE_KEY.replace(/\\n/g, "\n"),
         },
     });
+    console.log(process.env.PRIVATE_KEY.replace(/\\n/g, "\n"));
     
     if(fileData.data == null){
         return [null, 'null'];
