@@ -1398,7 +1398,7 @@ async function UploadImage(fileData){
     });
     
     if(fileData.data == null){
-        return null;
+        return [null, 'null'];
     }
     else{
         let imageName = `/${date.getTime()}`+`${fileData.extender}`;
