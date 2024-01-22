@@ -988,6 +988,18 @@ app.post('/supportWrite', async (req, res) => {
                 res.send(resJson);
                 return;
             }
+            
+            const query3 = 'SELECT * FROM users_table WHERE user_address = ?';
+            
+            const [result3] = await conn.query(query3, result[0].user_session_address);
+            
+            if(result3.length <= 0){
+                conn.release();
+                resJson.msg = '존재하지 않는 계정에 대한 세션입니다. 다시 로그인 해 주십시오.';
+                res.send(resJson);
+                return;
+            }
+            
             if (infos[0].length <= 0) {
                 conn.release();
                 resJson.msg = '제목을 작성하여 주십시오.';
@@ -1094,10 +1106,11 @@ app.post('/supportWrite', async (req, res) => {
             }
             
             const query2 =
-                'INSERT INTO supports_table(support_writer, support_title, support_product, support_price, support_goal, support_images, support_main) VALUES(?, ?, ?, ?, ?, ?, ?)';
+                'INSERT INTO supports_table(support_writer, support_writer_id ,support_title, support_product, support_price, support_goal, support_images, support_main) VALUES(?, ?, ?, ?, ?, ?, ?, ?)';
 
             const [result2] = await conn.query(query2, [
                 result[0].user_session_address,
+                result3[0].user_id,
                 infos[0],
                 infos[1],
                 infos[2],
