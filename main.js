@@ -1402,7 +1402,7 @@ async function UploadImage(fileData){
     }
     else{
         let imageName = `/${date.getTime()}`+`${fileData.extender}`;
-        let fileName = '/workspace/CrowdFundBack/imageFolder'+imageName;
+        let fileName = './imageFolder'+imageName;
         await fs.writeFileSync(fileName, fileData.data, 'base64');
         
         storage.bucket(process.env.BUCKET_NAME).upload(fileName, {
