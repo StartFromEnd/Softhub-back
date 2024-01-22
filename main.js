@@ -1408,9 +1408,11 @@ async function UploadImage(fileData){
         
         await fs.writeFileSync(fileName, fileData.data, 'base64');
         
-        const uploading = await storage.bucket(process.env.BUCKET_NAME).upload(fileName, {
-            destination: imageName,
-        });
+        const uploading = async() => { 
+            storage.bucket(process.env.BUCKET_NAME).upload(fileName, {
+                destination: imageName,
+            });
+        };
         
         uploading().catch((error) => {return ['false', error.message];});
         uploading().then(() => {return ['true', imageName];});
