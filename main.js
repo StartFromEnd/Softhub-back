@@ -1157,16 +1157,16 @@ app.post('/supportWrite', async (req, res) => {
                     fileData.data = null;
                 }
                 
-                const [result] = await UploadImage(fileData);
+                const [resultAddress] = await UploadImage(fileData);
                 
-                if(result[0] == false){
+                if(resultAddress[0] == false){
                     conn.release();
                     resJson.msg = '사진을 저장하던 중 오류가 발생하였습니다.';
                     res.send(resJson);
                     return;
                 }
                 else{
-                    imageAddress.add(result[1]);
+                    imageAddress.add(resultAddress[1]);
                 }
             }
             
