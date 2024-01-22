@@ -1060,7 +1060,7 @@ app.post('/supportWrite', async (req, res) => {
                 res.send(resJson);
                 return;
             }
-            let imageAddress = [];
+            let imageAddress = '';
             for(let i=0; i<images.length; i++){
                 let firstSplit = images[i].split(',');
                 let secondSplit = firstSplit[0].split('/');
@@ -1166,7 +1166,7 @@ app.post('/supportWrite', async (req, res) => {
                     return;
                 }
                 else{
-                    imageAddress[i] = msg;
+                    imageAddress += msg+'&%!,';
                 }
             }
             
