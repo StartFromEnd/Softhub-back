@@ -1157,7 +1157,7 @@ app.post('/supportWrite', async (req, res) => {
                     fileData.data = null;
                 }
                 
-                const [resultAddress] = await UploadImage(fileData);
+                const resultAddress = await UploadImage(fileData);
                 
                 if(resultAddress[0] == false){
                     conn.release();
