@@ -934,6 +934,7 @@ app.post('/supportList', async (req, res) => {
 });
 
 app.post('/supportRead', async(req, res) => {
+    let sessionID = req.body.sessionID;
     let seq = req.body.variable1;
     
     let date = new Date();
@@ -961,9 +962,46 @@ app.post('/supportRead', async(req, res) => {
                 return;
             }
             
+            let user_session_address = null;
+            if(sessionID != 'undefined'){
+                if(nInjectionCheck(sessionID)){
+                    const query2 = 'SELECT * FROM sessions_table WHERE user_session = ?';
+                
+                    const [result2] = await conn.query(query2, sessionID);
+                
+                    if(result2.length <= 0){
+                        conn.release();
+                        resJson.msg = '만료된 세션입니다 다시 로그인 해 주십시오.';
+                        res.send(resJson);
+                        return;
+                    }
+                    user_session_address = result2[0].user_session_address;
+                }
+                else{
+                    console.log(
+                        '_SESSION_INJECTION  /  ip: ' + ip + '  /  session: ' + sessionID + '  /  ' + date
+                    );
+                    conn.release();
+                    resJson.msg = '세션에 적절하지 않은 문자가 포함되어 있습니다. 서버에 ip가 저장됩니다.';
+                    res.send(resJson);
+                    return;
+                }
+            }
+            
+            let isSame = false;
+            if(user_session_address != result[0].support_writer){
+                isSame = false;
+            }
+            else if(user_session_address == result[0].support_writer){
+                isSame = true;
+            }
+            else{
+                isSame = false;
+            }
+            
             resJson.ok = true;
             resJson.msg = '후원글 로딩에 성공하셨습니다.';
-            resJson.result = result;
+            resJson.result = [result, isSame];
             
             conn.release();
         }
@@ -982,7 +1020,7 @@ app.post('/supportRead', async(req, res) => {
     }
     else{
         console.log(
-            '_SESSION_INJECTION  /  ip: ' + ip + '  /  ' + date
+            '_INJECTION  /  ip: ' + ip + '  /  seq: ' + seq + '  /  ' + date
         );
         resJson.msg = '요청에 적절하지 않은 문자가 포함되어 있습니다. 서버에 ip가 저장됩니다.';
     }
