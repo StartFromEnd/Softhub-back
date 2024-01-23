@@ -988,15 +988,15 @@ app.post('/supportRead', async(req, res) => {
                 }
             }
             
-            let isSame = false;
+            let isSame = 0;
             if(user_session_address != result[0].support_writer){
-                isSame = false;
+                isSame = 0;
             }
             else if(user_session_address == result[0].support_writer){
-                isSame = true;
+                isSame = 1;
             }
             else{
-                isSame = false;
+                isSame = 0;
             }
             
             resJson.ok = true;
