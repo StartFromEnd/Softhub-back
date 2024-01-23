@@ -990,10 +990,24 @@ app.post('/supportRead', async(req, res) => {
             
             let isSame = 0;
             if(user_session_address != result[0].support_writer){
-                isSame = 0;
+                if(result[0].support_supporters == null){
+                    isSame = 0;
+                }
+                else{
+                    let split = result[0].support_supporters.split('/');
+                    for(let i=0; i<split.length; i++){
+                        if(split[i] == user_session_address){
+                            isSame = 1;
+                            break;
+                        }
+                        else{
+                            isSame = 0;
+                        }
+                    }
+                }
             }
             else if(user_session_address == result[0].support_writer){
-                isSame = 1;
+                isSame = 2;
             }
             else{
                 isSame = 0;
