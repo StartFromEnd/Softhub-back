@@ -57,7 +57,7 @@ app.post('/oAuthGoogle', async (req, res) =>{
             resJson = Sign(formattedInfo.email, formattedInfo.name ,resJson);
             
             resJson.then((result) => {
-                res.send(result);
+                res.json(result);
             });
             
             return;
