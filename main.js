@@ -125,7 +125,7 @@ const Sign = async(email, name, resJson) => {
                 
                 resJson.result = {sessionID: session, nickname: (result.length <= 0 ? name : result[0].user_nickname)};
                 
-                return resJson;
+                return {resJson};
             }
         };
         
@@ -142,7 +142,7 @@ const Sign = async(email, name, resJson) => {
 
         conn.release();
         
-        return resJson;
+        return {resJson};
     }
 }
 
