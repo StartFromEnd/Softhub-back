@@ -54,15 +54,9 @@ app.post('/oAuthGoogle', async (req, res) =>{
     if(InjectionCheck(access_token, regexAccessToken)){
         const info = await fetch(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${access_token}`);
         info.json().then((formattedInfo) => {
-            const wait = Sign(formattedInfo.email, formattedInfo.name ,resJson);
-            wait.then((formattedWait) => {
-                console.log(formattedWait);
-                resJson.ok = formattedWait[0];
-                resJson.msg = formattedWait[1];
-                resJson.result = formattedWait[2];
-                console.log(resJson);
-                res.send(resJson);
-            });
+            const [ok, msg, result] = Sign(formattedInfo.email, formattedInfo.name ,resJson)
+            .then(() => {console.log(ok);});
+            
         })
         .catch((error) => {
             resJson.msg = 'Google에 정보를 요청하던 중 오류가 발생하였습니다.';
