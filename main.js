@@ -54,10 +54,7 @@ app.post('/oAuthGoogle', async (req, res) =>{
     if(InjectionCheck(access_token, regexAccessToken)){
         const info = await fetch(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${access_token}`);
         info.json().then((formattedInfo) => {
-            const [ok, msg, results] = Sign(formattedInfo.email, formattedInfo.name);
-            console.log(ok);
-            console.log(msg);
-            
+            Sign(req, res, resJson, formattedInfo.email, formattedInfo.name);
         })
         .catch((error) => {
             resJson.msg = 'Google에 정보를 요청하던 중 오류가 발생하였습니다.';
@@ -78,7 +75,7 @@ app.post('/oAuthGoogle', async (req, res) =>{
     }
 })
 
-const Sign = async(email, name) => {
+const Sign = async(req, res, resJson, email, name) => {
     let date = new Date();
     
     let conn = null;
@@ -114,13 +111,13 @@ const Sign = async(email, name) => {
                 
                 const [result4] = await conn.query(query4, [session, email]);
                 
-                let ok = true;
+                resJson.ok = true;
                 
-                let msg = `환영합니다 ${result.length <= 0 ? name : result[0].user_nickname}님`;
+                resJson.msg = `환영합니다 ${result.length <= 0 ? name : result[0].user_nickname}님`;
                 
-                let results = {sessionID: session, nickname: (result.length <= 0 ? name : result[0].user_nickname)};
+                resJson.results = {sessionID: session, nickname: (result.length <= 0 ? name : result[0].user_nickname)};
                 
-                return [ok, msg, results];
+                res.send(resJson);
             }
         };
         
@@ -131,14 +128,14 @@ const Sign = async(email, name) => {
         console.log('_SIGN_Error  /  email: ' + email + '  /  ' + stamp);
         console.log(error);
         
-        let ok = false;
-        let msg =
+        resJson.ok = false;
+        resJson.msg =
             '데이터를 확인하던 중 오류가 발생하였습니다. _SIGN_UP_Error: ' + `${stamp}`;
-        let results = {error: error.message};
-
+        resJson.results = {error: error.message};
+        
         conn.release();
         
-        return [ok, msg, results];
+        res.send(resJson);
     }
 }
 
