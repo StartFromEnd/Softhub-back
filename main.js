@@ -55,7 +55,11 @@ app.post('/oAuthGoogle', async (req, res) =>{
         const info = await fetch(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${access_token}`);
         info.json().then((formattedInfo) => {
             const wait = Sign(formattedInfo.email, formattedInfo.name ,resJson);
-            wait.then(() => {
+            wait.then((formattedWait) => {
+                console.log(formattedWait);
+                resJson.ok = formattedWait[0];
+                resJson.msg = formattedWait[1];
+                resJson.result = formattedWait[2];
                 console.log(resJson);
                 res.send(resJson);
             });
@@ -115,13 +119,13 @@ const Sign = async(email, name, resJson) => {
                 
                 const [result4] = await conn.query(query4, [session, email]);
                 
-                resJson.ok = true;
+                let ok = true;
                 
-                resJson.msg = `환영합니다 ${result.length <= 0 ? name : result[0].user_nickname}님`;
+                let msg = `환영합니다 ${result.length <= 0 ? name : result[0].user_nickname}님`;
                 
-                resJson.result = {sessionID: session, nickname: (result.length <= 0 ? name : result[0].user_nickname)};
+                let result = {sessionID: session, nickname: (result.length <= 0 ? name : result[0].user_nickname)};
                 
-                return;
+                return [ok, msg, result];
             }
         };
         
@@ -131,12 +135,15 @@ const Sign = async(email, name, resJson) => {
         let stamp = date.getTime();
         console.log('_SIGN_Error  /  email: ' + email + '  /  ' + stamp);
         console.log(error);
-
-        resJson.msg =
+        
+        let ok = false;
+        let msg =
             '데이터를 확인하던 중 오류가 발생하였습니다. _SIGN_UP_Error: ' + `${stamp}`;
-        resJson.result = {error: error.message};
+        let result = {error: error.message};
 
         conn.release();
+        
+        return [ok, msg, result];
     }
 }
 
