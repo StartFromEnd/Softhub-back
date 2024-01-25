@@ -90,8 +90,6 @@ const Sign = async(email, name, resJson) => {
         
         const salt = crypto.randomBytes(128).toString('base64');
         
-        hashLoop();
-        
         const hashLoop = async () => {
             const rand = Math.floor(Math.random() * 1000000);
             const session = hashing(salt, rand);
@@ -117,7 +115,9 @@ const Sign = async(email, name, resJson) => {
                 
                 return resJson;
             }
-        }
+        };
+        
+        hashLoop();
     }
     catch(error){
         let stamp = date.getTime();
