@@ -4,7 +4,6 @@ require('date');
 const requestIp = require('request-ip');
 
 const express = require('express');
-import fetch from 'node-fetch';
 
 const app = express();
 
@@ -23,6 +22,8 @@ const mysql = require('./mysql');
 const fs = require('fs');
 
 const {Storage} = require('@google-cloud/storage');
+
+import fetch from 'node-fetch';
 
 const corsOptions = {
     origin: [
