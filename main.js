@@ -23,8 +23,6 @@ const fs = require('fs');
 
 const {Storage} = require('@google-cloud/storage');
 
-import fetch from 'node-fetch';
-
 const corsOptions = {
     origin: [
         'https://fundhub.netlify.app',
@@ -33,6 +31,8 @@ const corsOptions = {
     ],
     credentials: true,
 };
+
+const fetch = (link) => import('node-fetch').then(({default: fetch}) => fetch(link));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
