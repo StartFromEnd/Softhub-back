@@ -40,7 +40,6 @@ app.use(cors(corsOptions));
 app.use(cookieParser());
 
 app.post('/oAuthGoogle', async (req, res) =>{
-    console.log(req.body.datas);
     const access_token = req.body.datas.access_token;
     
     let date = new Date();
@@ -56,7 +55,7 @@ app.post('/oAuthGoogle', async (req, res) =>{
     
     if(InjectionCheck(access_token, regexAccessToken)){
         const info = await fetch(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${access_token}`);
-        console.log(info);
+        console.log(info.json());
     }
     else{
         console.log('_INJECTION  /  ip: '+ip+'  /  access_token: '+access_token+'  /  '+date);
