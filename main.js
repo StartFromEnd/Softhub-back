@@ -51,11 +51,15 @@ app.post('/oAuthGoogle', async (req, res) =>{
         result: null,
     };
     
-    let conn = null;
-    
     if(InjectionCheck(access_token, regexAccessToken)){
         const info = await fetch(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${access_token}`);
-        info.json().then((formattedInfo) => {console.log(formattedInfo);});
+        info.json().then((formattedInfo) => {
+            resJson = Sign(formattedInfo.email, formattedInfo.name ,resJson);
+            
+            res.send(resJson);
+            
+            return;
+        });
     }
     else{
         console.log('_INJECTION  /  ip: '+ip+'  /  access_token: '+access_token+'  /  '+date);
@@ -64,6 +68,67 @@ app.post('/oAuthGoogle', async (req, res) =>{
     }
     res.send(resJson);
 })
+
+const Sign = async(email, name, resJson) => {
+    let date = new Date();
+    
+    let conn = null;
+    
+    try{
+        const query1 = 'SELECT * FROM users_table WHERE user_email=?';
+        
+        conn = await mysql.getConnection();
+        
+        const [result] = await conn.query(query1, email);
+        
+        if(result.length <= 0){
+            const query2 = 'INSERT INTO users_table(user_position, user_email, user_nickname) VALUES(투자자, ?, ?)';
+            
+            const [result2] = await conn.query(query2, [email, name]);
+        }
+        
+        const salt = crypto.randomBytes(128).toString('base64');
+        
+        const hashLoop = async () => {
+            const rand = Math.floor(Math.random() * 1000000);
+            const session = hashing(salt, rand);
+            
+            const query3 = 'SELECT * FROM users_table WHERE user_session=?';
+            
+            const [result3] = await conn.query(query3, session);
+            
+            if(result3.length > 0){
+                hashLoop();
+            }
+            else{
+                const query4 = 'INSERT INTO users_table(user_session) VALUES(?)';
+                
+                const [result4] = await conn.query(query4, session);
+                
+                resJson.ok = true;
+                
+                resJson.msg = `환영합니다 ${result.length <= 0 ? name : result[0].user_nickname}님`;
+                
+                resJson.result = [session, (result.length <= 0 ? name : result[0].user_nickname)];
+                
+                return resJson;
+            }
+        }
+    }
+    catch(error){
+        let stamp = date.getTime();
+        console.log('_SIGN_Error  /  email: ' + email + '  /  ' + stamp);
+        console.log(error);
+
+        resJson.msg =
+            '데이터를 확인하던 중 오류가 발생하였습니다. _SIGN_UP_Error: ' + `${stamp}`;
+        resJson.result = [error.message];
+
+        conn.release();
+        
+        return resJson;
+    }
+}
 
 app.post('/signUp', async (req, res) => {
     const salt = crypto.randomBytes(128).toString('base64');
@@ -164,12 +229,12 @@ app.listen(process.env.PORT, '0.0.0.0', () => {
     console.log(`${process.env.PORT}번 포트에서 대기중`);
 });
 
-function hashing(salt, pw) {
-    const hashedPassword = crypto
+function hashing(salt, rand) {
+    const hashed = crypto
         .createHash('sha512')
-        .update(pw + salt)
+        .update(rand + salt)
         .digest('hex');
-    return hashedPassword;
+    return hashed;
 }
 
 const regexAccessToken = /[^a-zA-Z0-9\.\-_]/;
