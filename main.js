@@ -56,7 +56,7 @@ app.post('/oAuthGoogle', async (req, res) =>{
         info.json().then((formattedInfo) => {
             resJson = Sign(formattedInfo.email, formattedInfo.name ,resJson);
             
-            res.send(resJson);
+            res.json(resJson);
             
             return;
         });
@@ -66,7 +66,7 @@ app.post('/oAuthGoogle', async (req, res) =>{
         
         resJson.msg = '요청에 적절하지 않은 문자가 포함되어 있습니다. 서버에 ip가 저장됩니다.';
     }
-    res.send(resJson);
+    res.json(resJson);
 })
 
 const Sign = async(email, name, resJson) => {
