@@ -63,7 +63,7 @@ app.post('/oAuthGoogle', async (req, res) =>{
         .catch((error) => {
             resJson.msg = 'Google에 정보를 요청하던 중 오류가 발생하였습니다.';
             
-            resJson.result = [error.message];
+            resJson.result = {error: error.message};
             
             res.send(resJson);
             
@@ -112,15 +112,15 @@ const Sign = async(email, name, resJson) => {
             }
             else{
                 console.log(session);
-                const query4 = 'INSERT INTO users_table(user_session) VALUES(?)';
+                const query4 = 'INSERT INTO users_table(user_session) VALUES(?) WHERE user_email=?';
                 
-                const [result4] = await conn.query(query4, session);
+                const [result4] = await conn.query(query4, [session, email]);
                 
                 resJson.ok = true;
                 
                 resJson.msg = `환영합니다 ${result.length <= 0 ? name : result[0].user_nickname}님`;
                 
-                resJson.result = [session, (result.length <= 0 ? name : result[0].user_nickname)];
+                resJson.result = {sessionID: session, nickname: (result.length <= 0 ? name : result[0].user_nickname)};
                 
                 return resJson;
             }
@@ -135,7 +135,7 @@ const Sign = async(email, name, resJson) => {
 
         resJson.msg =
             '데이터를 확인하던 중 오류가 발생하였습니다. _SIGN_UP_Error: ' + `${stamp}`;
-        resJson.result = [error.message];
+        resJson.result = {error: error.message};
 
         conn.release();
         
