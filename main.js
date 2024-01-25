@@ -112,7 +112,7 @@ const Sign = async(email, name, resJson) => {
             }
             else{
                 console.log(session);
-                const query4 = 'INSERT INTO users_table(user_session) VALUES(?) WHERE user_email=?';
+                const query4 = 'UPDATE users_table SET user_session=? WHERE user_email=?';
                 
                 const [result4] = await conn.query(query4, [session, email]);
                 
