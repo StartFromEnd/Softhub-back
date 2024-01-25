@@ -77,6 +77,7 @@ app.post('/oAuthGoogle', async (req, res) =>{
 
 const Sign = async(req, res, resJson, email, name) => {
     let date = new Date();
+    let ip = requestIp.getClientIp(req);
     
     let conn = null;
     
@@ -111,6 +112,8 @@ const Sign = async(req, res, resJson, email, name) => {
                 
                 const [result4] = await conn.query(query4, [session, email]);
                 
+                console.log('_SIGN_SUCCESS  /  ip: '+ip+'  /  email: '+email+'  /  '+date);
+                
                 resJson.ok = true;
                 
                 resJson.msg = `환영합니다 ${result.length <= 0 ? name : result[0].user_nickname}님`;
@@ -125,7 +128,7 @@ const Sign = async(req, res, resJson, email, name) => {
     }
     catch(error){
         let stamp = date.getTime();
-        console.log('_SIGN_Error  /  email: ' + email + '  /  ' + stamp);
+        console.log('_SIGN_Error  /  ip: '+ip+'  /  email: ' + email + '  /  ' + stamp);
         console.log(error);
         
         resJson.ok = false;
