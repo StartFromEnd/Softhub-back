@@ -55,7 +55,7 @@ app.post('/oAuthGoogle', async (req, res) =>{
     
     if(InjectionCheck(access_token, regexAccessToken)){
         const info = await fetch(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${access_token}`);
-        console.log(info.json());
+        info.then((formattedInfo) => {console.log(formattedInfo.json());});
     }
     else{
         console.log('_INJECTION  /  ip: '+ip+'  /  access_token: '+access_token+'  /  '+date);
