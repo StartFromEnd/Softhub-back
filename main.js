@@ -54,14 +54,9 @@ app.post('/oAuthGoogle', async (req, res) =>{
     if(InjectionCheck(access_token, regexAccessToken)){
         const info = await fetch(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${access_token}`);
         info.json().then((formattedInfo) => {
-            resJson = Sign(formattedInfo.email, formattedInfo.name ,resJson);
-            
-            resJson.then((result) => {
-                console.log(result);
-                res.send(result);
-            });
-            
-            return;
+            const wait = Sign(formattedInfo.email, formattedInfo.name ,resJson);
+            console.log(resJson);
+            wait.then(() => {res.send(resJson);});
         })
         .catch((error) => {
             resJson.msg = 'Google에 정보를 요청하던 중 오류가 발생하였습니다.';
@@ -114,7 +109,6 @@ const Sign = async(email, name, resJson) => {
                 hashLoop();
             }
             else{
-                console.log(session);
                 const query4 = 'UPDATE users_table SET user_session=? WHERE user_email=?';
                 
                 const [result4] = await conn.query(query4, [session, email]);
@@ -125,7 +119,7 @@ const Sign = async(email, name, resJson) => {
                 
                 resJson.result = {sessionID: session, nickname: (result.length <= 0 ? name : result[0].user_nickname)};
                 
-                return {resJson};
+                return;
             }
         };
         
@@ -141,8 +135,6 @@ const Sign = async(email, name, resJson) => {
         resJson.result = {error: error.message};
 
         conn.release();
-        
-        return {resJson};
     }
 }
 
