@@ -4,7 +4,7 @@ require('date');
 const requestIp = require('request-ip');
 
 const express = require('express');
-const fetch = require('node-fetch');
+import fetch from 'node-fetch';
 
 const app = express();
 
