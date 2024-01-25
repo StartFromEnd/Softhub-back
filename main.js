@@ -102,6 +102,7 @@ const Sign = async(email, name, resJson) => {
                 hashLoop();
             }
             else{
+                console.log(session);
                 const query4 = 'INSERT INTO users_table(user_session) VALUES(?)';
                 
                 const [result4] = await conn.query(query4, session);
