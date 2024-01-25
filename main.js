@@ -51,7 +51,7 @@ app.post('/oAuthGoogle', async (req, res) =>{
         result: null,
     };
     
-    if(InjectionCheck(access_token, regexAccessToken)){
+    if(InjectionCheck(`${access_token}`, regexAccessToken)){
         const info = await fetch(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${access_token}`);
         info.json().then((formattedInfo) => {
             Sign(req, res, resJson, formattedInfo.email, formattedInfo.name);
