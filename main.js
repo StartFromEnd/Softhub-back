@@ -54,7 +54,7 @@ app.post('/oAuthGoogle', async (req, res) =>{
     if(InjectionCheck(access_token, regexAccessToken)){
         const info = await fetch(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${access_token}`);
         info.json().then(async(formattedInfo) => {
-            const [ok, msg, result] = await Sign(formattedInfo.email, formattedInfo.name ,resJson);
+            const [ok, msg, results] = await Sign(formattedInfo.email, formattedInfo.name);
             console.log(ok);
             
         })
@@ -77,7 +77,7 @@ app.post('/oAuthGoogle', async (req, res) =>{
     }
 })
 
-const Sign = async(email, name, resJson) => {
+const Sign = async(email, name) => {
     let date = new Date();
     
     let conn = null;
@@ -117,9 +117,9 @@ const Sign = async(email, name, resJson) => {
                 
                 let msg = `환영합니다 ${result.length <= 0 ? name : result[0].user_nickname}님`;
                 
-                let result = {sessionID: session, nickname: (result.length <= 0 ? name : result[0].user_nickname)};
+                let results = {sessionID: session, nickname: (result.length <= 0 ? name : result[0].user_nickname)};
                 
-                return [ok, msg, result];
+                return [ok, msg, results];
             }
         };
         
@@ -133,11 +133,11 @@ const Sign = async(email, name, resJson) => {
         let ok = false;
         let msg =
             '데이터를 확인하던 중 오류가 발생하였습니다. _SIGN_UP_Error: ' + `${stamp}`;
-        let result = {error: error.message};
+        let results = {error: error.message};
 
         conn.release();
         
-        return [ok, msg, result];
+        return [ok, msg, results];
     }
 }
 
