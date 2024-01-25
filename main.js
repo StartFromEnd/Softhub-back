@@ -37,6 +37,7 @@ app.use(cors(corsOptions));
 app.use(cookieParser());
 
 app.post('/oAuthGoogle', async (req, res) =>{
+    console.log(req.body.datas);
     const access_token = req.body.datas.access_token;
     
     let date = new Date();
