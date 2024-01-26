@@ -54,6 +54,7 @@ app.post('/oAuthGoogle', async (req, res) =>{
     if(InjectionCheck(`${access_token}`, regexAccessToken)){
         const info = await fetch(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${access_token}`, {});
         info.json().then((formattedInfo) => {
+            console.log(formattedInfo);
             Sign(req, res, resJson, formattedInfo.email, formattedInfo.name);
         })
         .catch((error) => {
@@ -88,17 +89,27 @@ app.post('/oAuthKakao', async(req, res) => {
     };
     
     if(InjectionCheck(`${access_token}`, regexAccessToken)){
-        const info = await fetch(`https://openapi.naver.com/v1/nid/me`, {
+        const info = await fetch(`https://kapi.kakao.com/v2/user/me`, {
             headers: {
                 'Authorization': `Bearer ${access_token}`,
+                'Content-type': 'application/x-www-form-urlencoded;charset=utf-8',
             },
         });
         info.json().then((formattedInfo) => {
-            console.log(formattedInfo);
-            //Sign(req, res, resJson, formattedInfo.kakao_account.email, formattedInfo.kakao_account.profile.nickname);
+            if(formattedInfo.kakao_account.is_email_valid && formattedInfo.kakao_account.is_email_verified){
+                console.log(formattedInfo);
+                Sign(req, res, resJson, formattedInfo.kakao_account.email, formattedInfo.kakao_account.profile.nickname);
+            }
+            else{
+                resJson.msg = '카카오계정에 등록된 이메일이 인증된 이메일이 아닙니다. 카카오계정에서 이메일을 인증하여주세요.'
+                
+                res.send(resJson);
+                
+                return;
+            }
         })
         .catch((error) => {
-            resJson.msg = '네이버에 정보를 요청하던 중 오류가 발생하였습니다.';
+            resJson.msg = '카카오에 정보를 요청하던 중 오류가 발생하였습니다.';
             
             resJson.result = {error: error.message};
             
@@ -117,7 +128,43 @@ app.post('/oAuthKakao', async(req, res) => {
 });
 
 app.post('/oAuthNaver', async(req, res) => {
+    const access_token = req.body.datas.access_token;
     
+    let date = new Date();
+    let ip = requestIp.getClientIp(req);
+    
+    let resJson = {
+        ok: false,
+        msg: '',
+        result: null,
+    };
+    
+    if(InjectionCheck(`${access_token}`, regexAccessToken)){
+        const info = await fetch(`https://openapi.naver.com/v1/nid/me`, {
+            headers: {
+                'Authorization': `Bearer ${access_token}`,
+            },
+        });
+        info.json().then((formattedInfo) => {
+            console.log(formattedInfo);
+        })
+        .catch((error) => {
+            resJson.msg = '네이버에 정보를 요청하던 중 오류가 발생하였습니다.';
+            
+            resJson.result = {error: error.message};
+            
+            res.send(resJson);
+            
+            return;
+        });
+    }
+    else{
+        console.log('_INJECTION  /  ip: '+ip+'  /  access_token: '+access_token+'  /  '+date);
+        
+        resJson.msg = '요청에 적절하지 않은 문자가 포함되어 있습니다. 서버에 ip가 저장됩니다.';
+        
+        res.send(resJson);
+    }
 });
 
 const Sign = async(req, res, resJson, email, name) => {
