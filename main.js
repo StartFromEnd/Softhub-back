@@ -75,7 +75,7 @@ app.post('/oAuthGoogle', async (req, res) =>{
     }
 });
 
-app.post('oAuthKakao', async(req, res) => {
+app.post('/oAuthKakao', async(req, res) => {
     const access_token = req.body.datas.access_token;
     
     let date = new Date();
