@@ -141,8 +141,8 @@ app.post('/oAuthNaver', async(req, res) => {
     let codeRes;
     
     if(InjectionCheck(`${code}`, regexAccessToken)){
-        const NAVER_CLIENT_ID = process.env.REACT_APP_NAVER_CLIENT_ID;
-        const NAVER_SECRET_KEY = process.env.REACT_APP_NAVER_SECRET_KEY;
+        const NAVER_CLIENT_ID = process.env.NAVER_CLIENT_ID;
+        const NAVER_SECRET_KEY = process.env.NAVER_SECRET_KEY;
         
         const rand = 'naver-'+Math.floor(Math.random() * 1000000000).toString();
         
