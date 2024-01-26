@@ -89,9 +89,13 @@ const Sign = async(req, res, resJson, email, name) => {
         const [result] = await conn.query(query1, email);
         
         if(result.length <= 0){
-            const query2 = 'INSERT INTO users_table(user_position, user_email, user_nickname) VALUES(?, ?, ?)';
+            const query2 = 'INSERT INTO users_table(user_email, user_nickname) VALUES(?, ?)';
             
-            const [result2] = await conn.query(query2, ['투자자', email, name]);
+            const [result2] = await conn.query(query2, [email, name]);
+            
+            const subQuery2 = 'INSERT INTO users_infos_table(user_email, user_position) VALUES(?, ?)';
+            
+            const [subResult2] = await conn.query(subQuery2, [email, '투자자']);
         }
         
         const salt = crypto.randomBytes(128).toString('base64');
