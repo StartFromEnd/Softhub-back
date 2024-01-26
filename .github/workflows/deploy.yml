@@ -53,6 +53,12 @@ jobs:
                   secret: client_email
                 - name: PRIVATE_KEY
                   secret: private_key
+                - name: NAVER_CLIENT_ID
+                  secret: naver_client_id
+                - name: NAVER_REDIRECT_URI
+                  secret: naver_redirect_uri
+                - name: NAVER_SECRET_KEY
+                  secret: naver_secret_key
             context:
               git:
                 url: git@github.com:${{ github.repository }}.git
