@@ -57,7 +57,11 @@ app.post('/oAuthGoogle', async (req, res) =>{
             Sign(req, res, resJson, `google-${formattedInfo.id}`, formattedInfo.name);
         })
         .catch((error) => {
-            resJson.msg = 'Google에 정보를 요청하던 중 오류가 발생하였습니다.';
+            let stamp = date.getTime();
+            console.log('_SIGN_Error  /  ip: '+ip+'  /  '+stamp);
+            console.log(error);
+            
+            resJson.msg = 'Google에 정보를 요청하던 중 오류가 발생하였습니다. _SIGN_Error: '+stamp.toString();
             
             resJson.result = {error: error.message};
             
@@ -98,7 +102,11 @@ app.post('/oAuthKakao', async(req, res) => {
             Sign(req, res, resJson, `kakao-${formattedInfo.id}`, formattedInfo.kakao_account.profile.nickname);
         })
         .catch((error) => {
-            resJson.msg = '카카오에 정보를 요청하던 중 오류가 발생하였습니다.';
+            let stamp = date.getTime();
+            console.log('_SIGN_Error  /  ip: '+ip+'  /  '+stamp);
+            console.log(error);
+            
+            resJson.msg = '카카오에 정보를 요청하던 중 오류가 발생하였습니다. _SIGN_Error: '+stamp.toString();
             
             resJson.result = {error: error.message};
             
@@ -155,9 +163,25 @@ app.post('/oAuthNaver', async(req, res) => {
             },
         });
         info.json().then((formattedInfo) => {
-            Sign(req, res, resJson, `naver-${formattedInfo.response.id}`, formattedInfo.response.name);
+            if(formattedInfo.message == 'success'){
+                Sign(req, res, resJson, `naver-${formattedInfo.response.id}`, formattedInfo.response.name);
+            }
+            else{
+                let stamp = date.getTime();
+                console.log(`_SIGN_Error  /  ip: ${ip}  /  ${formattedInfo}  /  `+stamp);
+                
+                resJson.msg = '네이버에 정보를 요청하던 중 오류가 발생하였습니다. _SIGN_Error: '+stamp.toString();
+                
+                res.send(resJson);
+                
+                return;
+            }
         })
         .catch((error) => {
+            let stamp = date.getTime();
+            console.log('_SIGN_Error  /  ip: '+ip+'  /  '+stamp);
+            console.log(error);
+            
             resJson.msg = '네이버에 정보를 요청하던 중 오류가 발생하였습니다.';
             
             resJson.result = {error: error.message};
