@@ -323,7 +323,7 @@ app.post('/profil', async(req, res) => {
                 resJson.ok = true;
                 resJson.msg = '프로필 로딩에 성공하였습니다.';
                 resJson.result = {
-                    id: result2[0].user_id,
+                    id: result2[0].user_id.split('-')[0],
                     position: result2[0].user_position,
                     number: result2[0].user_number,
                     bank: result2[0].user_bank,
