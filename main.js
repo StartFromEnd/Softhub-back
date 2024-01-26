@@ -311,7 +311,7 @@ app.post('/profil', async(req, res) => {
                 
                 conn.release();
                 resJson.ok = false;
-                resJson.msg = '데이터상에 오류가 있습니다. 다음의 오류코드를 이용하여 관리자에게 문의해 주십시오.'+stamp.toString();
+                resJson.msg = '데이터상에 오류가 있습니다. 다음의 오류코드를 이용하여 관리자에게 문의해 주십시오. '+stamp.toString();
                 resJson.result = null;
                 res.send(resJson);
                 return;
@@ -322,9 +322,9 @@ app.post('/profil', async(req, res) => {
                 resJson.result = {
                     id: result2[0].user_id.split('-')[0],
                     position: result2[0].user_position,
-                    number: result2[0].user_number,
-                    bank: result2[0].user_bank,
-                    bank_account: result2[0].user_bank_account
+                    number: (result2[0].user_number == null ? '인증안함' : result2[0].user_number),
+                    bank: (result2[0].user_bank == null ? '정보없음' : result2[0].user_bank),
+                    bank_account: (result2[0].user_bank_account == null ? '정보없음' : result2[0].user_bank_account)
                 };
                 res.send(resJson);
                 conn.release();
