@@ -262,7 +262,7 @@ const Sign = async(req, res, resJson, id, name) => {
         
         resJson.ok = false;
         resJson.msg =
-            '데이터를 확인하던 중 오류가 발생하였습니다. _SIGN_UP_Error: ' + `${stamp}`;
+            '데이터를 확인하던 중 오류가 발생하였습니다. _SIGN_Error: ' + `${stamp}`;
         resJson.result = {error: error.message};
         
         conn.release();
@@ -271,99 +271,91 @@ const Sign = async(req, res, resJson, id, name) => {
     }
 };
 
-app.post('/signUp', async (req, res) => {
-    const salt = crypto.randomBytes(128).toString('base64');
-    const access_token = req.body.datas.access_token;
-
+app.post('/profil', async(req, res) => {
+    const sessionID = req.body.datas.sessionID;
+    
     let date = new Date();
     let ip = requestIp.getClientIp(req);
-
+    
     let resJson = {
         ok: false,
         msg: '',
         result: null,
     };
     let conn = null;
-
-    if (
-        epInjectionCheck(email, password) &&
-        nInjectionCheck(nickname) &&
-        nInjectionCheck(emailAuth)
-    ) {
-        try {
-            //check is there same email
-            const query1 = 'SELECT user_address FROM users_table WHERE user_address = ?';
-
+    
+    if(InjectionCheck(`${sessionID}`, regexAccessToken)){
+        try{
+            const query1 = 'SELECT user_id FROM users_table WHERE user_session=?';
+            
             conn = await mysql.getConnection();
-
-            const [result] = await conn.query(query1, email);
-
-            if (result.length >= 1) {
+            
+            const [result] = conn.query(query1, sessionID);
+            
+            console.log(result);
+            console.log(result[0]);
+            
+            if(result.length <= 0){
                 conn.release();
-                resJson.msg = '이미 존재하는 이메일 계정 입니다.';
+                resJson.ok = false;
+                resJson.msg = '만료된 세션입니다. 다시 로그인 해 주십시오.';
+                resJson.result = null;
                 res.send(resJson);
                 return;
             }
-
-            //check is there same nickname
-            const query2 = 'SELECT user_id FROM users_table WHERE user_id = ?';
-
-            const [result2] = await conn.query(query2, nickname);
-
-            if (result2.length >= 1) {
+            
+            const query2 = 'SELECT * FROM users_infos_table WHERE user_id=?';
+            
+            const [result2] = conn.query(query2, result[0]);
+            
+            if(result2.length <= 0){
+                let stamp = date.getTime();
+                console.log('_PROFIL_Error_Null_infos  /  ip: '+ip+'  /  id: '+result[0]+'  /  '+stamp);
+                
                 conn.release();
-                resJson.msg = '이미 존재하는 닉네임 입니다.';
+                resJson.ok = false;
+                resJson.msg = '데이터상에 오류가 있습니다. 다음의 오류코드를 이용하여 관리자에게 문의해 주십시오.'+stamp.toString();
+                resJson.result = null;
                 res.send(resJson);
                 return;
             }
-
-            //authorize email
-            if (emailAuth == 'null') {
-                emailAuthorize(req, res, resJson);
-                conn.release();
-                return;
-            } else if (emailAuth == 'true') {
-                const query3 =
-                    'INSERT INTO users_table(user_id, user_position, user_pw, user_salt, user_address, created_at, updated_at) VALUES(?, ?, ?, ?, ?, now(), now())';
-
-                const [result3] = await conn.query(query3, [
-                    nickname,
-                    'supporter',
-                    hashing(salt, password),
-                    salt,
-                    email,
-                ]);
-
+            else{
                 resJson.ok = true;
-                resJson.msg = '회원가입에 성공하셨습니다.';
-
-                console.log(
-                    '_SIGN_UP_Success  /  ip: ' + ip + '  /  email: ' + email + '  /  ' + date
-                );
-
-                makeSession(conn, req, res, resJson);
+                resJson.msg = '프로필 로딩에 성공하였습니다.';
+                resJson.result = {
+                    id: result2[0].user_id,
+                    position: result2[0].user_position,
+                    number: result2[0].user_number,
+                    bank: result2[0].user_bank,
+                    bank_account: result2[0].user_bank_account
+                };
+                res.send(resJson);
                 conn.release();
                 return;
-            } else {
-                resJson.msg = '인증번호가 일치하지 않습니다.';
             }
-            conn.release();
-        } catch (error) {
+        }
+        catch(error){
             let stamp = date.getTime();
-            console.log('_SIGN_UP_Error  /  ip: ' + ip + '  /  ' + stamp);
+            console.log('_PROFIL_Error  /  ip: '+ip+'  /  ' + stamp);
             console.log(error);
-
+        
+            resJson.ok = false;
             resJson.msg =
-                '데이터를 확인하던 중 오류가 발생하였습니다. _SIGN_UP_Error: ' + `${stamp}`;
+                '데이터를 확인하던 중 오류가 발생하였습니다. _PROFIL_Error: ' +stamp.toString();
             resJson.result = {error: error.message};
-
+        
+            res.send(resJson);
+            
             conn.release();
         }
-    } else {
-        resJson.msg =
-            '요청에 적절하지 않은 문자 (한글, 영어, 숫자, !, ?, @, . 외의 문자) 가 포함되어 있습니다.';
     }
-    res.send(resJson);
+    else{
+        console.log('_INJECTION  /  ip: '+ip+'  /  sessionID: '+sessionID+'  /  '+date);
+        
+        resJson.msg = '요청에 적절하지 않은 문자가 포함되어 있습니다. 서버에 ip가 저장됩니다.';
+        
+        res.send(resJson);
+    }
 });
 
 app.listen(process.env.PORT, '0.0.0.0', () => {
