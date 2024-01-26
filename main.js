@@ -147,12 +147,13 @@ app.post('/oAuthNaver', async(req, res) => {
         const rand = 'naver-'+Math.floor(Math.random() * 1000000000).toString();
         
         codeRes = await fetch(`https://nid.naver.com/oauth2.0/token?grant_type=authorization_code&client_id=${NAVER_CLIENT_ID}&client_secret=${NAVER_SECRET_KEY}&code=${code}&state=${rand}`, {});
+        codeRes = codeRes.json();
     } 
     
-    if(InjectionCheck(`${codeRes.json().access_token}`, regexAccessToken)){
+    if(InjectionCheck(`${codeRes.access_token}`, regexAccessToken)){
         const info = await fetch(`https://openapi.naver.com/v1/nid/me`, {
             headers: {
-                'Authorization': `Bearer ${codeRes.json().access_token}`,
+                'Authorization': `Bearer ${codeRes.access_token}`,
             },
         });
         info.json().then((formattedInfo) => {
