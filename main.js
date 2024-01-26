@@ -88,26 +88,17 @@ app.post('/oAuthKakao', async(req, res) => {
     };
     
     if(InjectionCheck(`${access_token}`, regexAccessToken)){
-        const info = await fetch(`https://kapi.kakao.com/v2/user/me`, {
+        const info = await fetch(`https://openapi.naver.com/v1/nid/me`, {
             headers: {
                 'Authorization': `Bearer ${access_token}`,
-                'Content-type': 'application/x-www-form-urlencoded;charset=utf-8',
             },
         });
         info.json().then((formattedInfo) => {
-            if(formattedInfo.kakao_account.is_email_valid && formattedInfo.kakao_account.is_email_verified){
-                Sign(req, res, resJson, formattedInfo.kakao_account.email, formattedInfo.kakao_account.profile.nickname);
-            }
-            else{
-                resJson.msg = '카카오계정에 등록된 이메일이 인증된 이메일이 아닙니다. 카카오계정에서 이메일을 인증하여주세요.'
-                
-                res.send(resJson);
-                
-                return;
-            }
+            console.log(formattedInfo);
+            //Sign(req, res, resJson, formattedInfo.kakao_account.email, formattedInfo.kakao_account.profile.nickname);
         })
         .catch((error) => {
-            resJson.msg = '카카오에 정보를 요청하던 중 오류가 발생하였습니다.';
+            resJson.msg = '네이버에 정보를 요청하던 중 오류가 발생하였습니다.';
             
             resJson.result = {error: error.message};
             
@@ -123,6 +114,10 @@ app.post('/oAuthKakao', async(req, res) => {
         
         res.send(resJson);
     }
+});
+
+app.post('/oAuthNaver', async(req, res) => {
+    
 });
 
 const Sign = async(req, res, resJson, email, name) => {
