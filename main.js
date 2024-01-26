@@ -292,9 +292,6 @@ app.post('/profil', async(req, res) => {
             
             const [result] = await conn.query(query1, sessionID);
             
-            console.log(result);
-            console.log(result[0]);
-            
             if(result.length <= 0){
                 conn.release();
                 resJson.ok = false;
@@ -306,11 +303,11 @@ app.post('/profil', async(req, res) => {
             
             const query2 = 'SELECT * FROM users_infos_table WHERE user_id=?';
             
-            const [result2] = await conn.query(query2, result[0]);
+            const [result2] = await conn.query(query2, result[0].user_id);
             
             if(result2.length <= 0){
                 let stamp = date.getTime();
-                console.log('_PROFIL_Error_Null_infos  /  ip: '+ip+'  /  id: '+result[0]+'  /  '+stamp);
+                console.log('_PROFIL_Error_Null_infos  /  ip: '+ip+'  /  id: '+result[0].user_id+'  /  '+stamp);
                 
                 conn.release();
                 resJson.ok = false;
