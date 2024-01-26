@@ -54,8 +54,7 @@ app.post('/oAuthGoogle', async (req, res) =>{
     if(InjectionCheck(`${access_token}`, regexAccessToken)){
         const info = await fetch(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${access_token}`, {});
         info.json().then((formattedInfo) => {
-            console.log(formattedInfo);
-            Sign(req, res, resJson, formattedInfo.email, formattedInfo.name);
+            Sign(req, res, resJson, `google-${formattedInfo.id}`, formattedInfo.name);
         })
         .catch((error) => {
             resJson.msg = 'Google에 정보를 요청하던 중 오류가 발생하였습니다.';
@@ -96,17 +95,7 @@ app.post('/oAuthKakao', async(req, res) => {
             },
         });
         info.json().then((formattedInfo) => {
-            if(formattedInfo.kakao_account.is_email_valid && formattedInfo.kakao_account.is_email_verified){
-                console.log(formattedInfo);
-                Sign(req, res, resJson, formattedInfo.kakao_account.email, formattedInfo.kakao_account.profile.nickname);
-            }
-            else{
-                resJson.msg = '카카오계정에 등록된 이메일이 인증된 이메일이 아닙니다. 카카오계정에서 이메일을 인증하여주세요.'
-                
-                res.send(resJson);
-                
-                return;
-            }
+            Sign(req, res, resJson, `kakao-${formattedInfo.id}`, formattedInfo.kakao_account.profile.nickname);
         })
         .catch((error) => {
             resJson.msg = '카카오에 정보를 요청하던 중 오류가 발생하였습니다.';
@@ -149,7 +138,16 @@ app.post('/oAuthNaver', async(req, res) => {
         codeRes = await fetch(`https://nid.naver.com/oauth2.0/token?grant_type=authorization_code&client_id=${NAVER_CLIENT_ID}&client_secret=${NAVER_SECRET_KEY}&code=${code}&state=${rand}`, {});
         codeRes = await codeRes.json();
     } 
-    console.log(codeRes);
+    else{
+        console.log('_INJECTION  /  ip: '+ip+'  /  code: '+code+'  /  '+date);
+        
+        resJson.msg = '요청에 적절하지 않은 문자가 포함되어 있습니다. 서버에 ip가 저장됩니다.';
+        
+        res.send(resJson);
+        
+        return;
+    }
+    
     if(InjectionCheck(`${codeRes.access_token}`, regexAccessToken)){
         const info = await fetch(`https://openapi.naver.com/v1/nid/me`, {
             headers: {
@@ -157,7 +155,7 @@ app.post('/oAuthNaver', async(req, res) => {
             },
         });
         info.json().then((formattedInfo) => {
-            console.log(formattedInfo);
+            Sign(req, res, resJson, `naver-${formattedInfo.response.id}`, formattedInfo.response.name);
         })
         .catch((error) => {
             resJson.msg = '네이버에 정보를 요청하던 중 오류가 발생하였습니다.';
@@ -170,7 +168,7 @@ app.post('/oAuthNaver', async(req, res) => {
         });
     }
     else{
-        console.log('_INJECTION  /  ip: '+ip+'  /  access_token: '+access_token+'  /  '+date);
+        console.log('_INJECTION  /  ip: '+ip+'  /  access_token: '+codeRes.access_token+'  /  '+date);
         
         resJson.msg = '요청에 적절하지 않은 문자가 포함되어 있습니다. 서버에 ip가 저장됩니다.';
         
@@ -178,27 +176,27 @@ app.post('/oAuthNaver', async(req, res) => {
     }
 });
 
-const Sign = async(req, res, resJson, email, name) => {
+const Sign = async(req, res, resJson, id, name) => {
     let date = new Date();
     let ip = requestIp.getClientIp(req);
     
     let conn = null;
     
     try{
-        const query1 = 'SELECT * FROM users_table WHERE user_email=?';
+        const query1 = 'SELECT * FROM users_table WHERE user_id=?';
         
         conn = await mysql.getConnection();
         
-        const [result] = await conn.query(query1, email);
+        const [result] = await conn.query(query1, id);
         
         if(result.length <= 0){
-            const query2 = 'INSERT INTO users_table(user_email, user_nickname) VALUES(?, ?)';
+            const query2 = 'INSERT INTO users_table(user_id, user_nickname) VALUES(?, ?)';
             
-            const [result2] = await conn.query(query2, [email, name]);
+            const [result2] = await conn.query(query2, [id, name]);
             
-            const subQuery2 = 'INSERT INTO users_infos_table(user_email, user_position) VALUES(?, ?)';
+            const subQuery2 = 'INSERT INTO users_infos_table(user_id, user_position) VALUES(?, ?)';
             
-            const [subResult2] = await conn.query(subQuery2, [email, '투자자']);
+            const [subResult2] = await conn.query(subQuery2, [id, '투자자']);
         }
         
         const salt = crypto.randomBytes(128).toString('base64');
@@ -215,11 +213,11 @@ const Sign = async(req, res, resJson, email, name) => {
                 hashLoop();
             }
             else{
-                const query4 = 'UPDATE users_table SET user_session=? WHERE user_email=?';
+                const query4 = 'UPDATE users_table SET user_session=? WHERE user_id=?';
                 
-                const [result4] = await conn.query(query4, [session, email]);
+                const [result4] = await conn.query(query4, [session, id]);
                 
-                console.log('_SIGN_SUCCESS  /  ip: '+ip+'  /  email: '+email+'  /  '+date);
+                console.log('_SIGN_SUCCESS  /  ip: '+ip+'  /  id: '+id+'  /  '+date);
                 
                 resJson.ok = true;
                 
@@ -235,7 +233,7 @@ const Sign = async(req, res, resJson, email, name) => {
     }
     catch(error){
         let stamp = date.getTime();
-        console.log('_SIGN_Error  /  ip: '+ip+'  /  email: ' + email + '  /  ' + stamp);
+        console.log('_SIGN_Error  /  ip: '+ip+'  /  id: ' + id + '  /  ' + stamp);
         console.log(error);
         
         resJson.ok = false;
