@@ -290,7 +290,7 @@ app.post('/profil', async(req, res) => {
             
             conn = await mysql.getConnection();
             
-            const [result] = conn.query(query1, sessionID);
+            const [result] = await conn.query(query1, sessionID);
             
             console.log(result);
             console.log(result[0]);
@@ -306,7 +306,7 @@ app.post('/profil', async(req, res) => {
             
             const query2 = 'SELECT * FROM users_infos_table WHERE user_id=?';
             
-            const [result2] = conn.query(query2, result[0]);
+            const [result2] = await conn.query(query2, result[0]);
             
             if(result2.length <= 0){
                 let stamp = date.getTime();
