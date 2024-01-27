@@ -214,13 +214,21 @@ const Sign = async(req, res, resJson, id, name) => {
         const [result] = await conn.query(query1, id);
         
         if(result.length <= 0){
-            const query2 = 'INSERT INTO users_table(user_id, user_nickname) VALUES(?, ?)';
+            const query2 = 'SELECT COUNT(*) as count FROM users_table WHERE user_nickname LIKE ?';
             
-            const [result2] = await conn.query(query2, [id, name]);
+            const [result2] = await conn.query(query2, `%${name}(%`);
             
-            const subQuery2 = 'INSERT INTO users_infos_table(user_id, user_position) VALUES(?, ?)';
+            if(result2[0].count > 0){
+                name = `${name}(${result2[0].count+1})`;
+            }
             
-            const [subResult2] = await conn.query(subQuery2, [id, '투자자']);
+            const subQuery2_1 = 'INSERT INTO users_table(user_id, user_nickname) VALUES(?, ?)';
+            
+            const [subResult2_1] = await conn.query(subQuery2_1, [id, name]);
+            
+            const subQuery2_2 = 'INSERT INTO users_infos_table(user_id, user_position) VALUES(?, ?)';
+            
+            const [subResult2_2] = await conn.query(subQuery2_2, [id, '투자자']);
         }
         
         const salt = crypto.randomBytes(128).toString('base64');
@@ -320,7 +328,7 @@ app.post('/profil', async(req, res) => {
                 resJson.ok = true;
                 resJson.msg = '프로필 로딩에 성공하였습니다.';
                 resJson.result = {
-                    id: result2[0].user_id,
+                    id: result2[0].user_id.split('-')[0],
                     position: result2[0].user_position,
                     number: (result2[0].user_number == null ? '인증안함' : result2[0].user_number),
                     bank: (result2[0].user_bank == null ? '정보없음' : result2[0].user_bank),
